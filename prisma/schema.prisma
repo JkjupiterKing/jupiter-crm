@@ -1,0 +1,313 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum InventoryItemType {
+  PRODUCT
+  SPARE_PART
+}
+
+enum InventoryTransactionKind {
+  ADJUSTMENT
+  PURCHASE
+  SALE
+  SERVICE_USE
+  RETURN
+}
+
+enum SaleItemType {
+  PRODUCT
+  SPARE_PART
+}
+
+enum ServiceStatus {
+  PLANNED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum JobType {
+  INSTALLATION
+  REPAIR
+  SERVICE
+}
+
+enum WarrantyStatus {
+  IN_WARRANTY
+  IN_CONTRACT
+  OUT_OF_WARRANTY
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum ContractType {
+  WARRANTY
+  AMC
+}
+
+model Product {
+  id               Int                  @id @default(autoincrement())
+  name             String
+  sku              String               @unique
+  description      String?
+  price            Int?             
+  warrantyMonths   Int                  @default(12)
+  isActive         Boolean              @default(true)
+  stockQuantity    Int                  @default(0)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  spareParts       SparePart[]
+  customerProducts CustomerProduct[]
+  saleItems        SaleItem[]
+  serviceItems     ServiceItem[]
+  inventoryTxns    InventoryTransaction[]
+
+  @@index([name])
+  @@index([sku])
+}
+
+model SparePart {
+  id            Int                   @id @default(autoincrement())
+  name          String
+  sku           String                @unique
+  description   String?
+  price         Int?              
+  isActive      Boolean               @default(true)
+  stockQuantity Int                   @default(0)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  product       Product?              @relation(fields: [productId], references: [id])
+  productId     Int?
+
+  saleItems     SaleItem[]
+  serviceItems  ServiceItem[]
+  inventoryTxns InventoryTransaction[]
+
+  @@index([name])
+  @@index([sku])
+  @@index([productId])
+}
+
+model Customer {
+  id            Int            @id @default(autoincrement())
+  fullName      String
+  doorNumber    String?
+  street        String?
+  area          String?
+  layout        String?
+  district      String?
+  pinCode       String?
+  mobile        String
+  altMobile     String?
+  email         String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  products      CustomerProduct[]
+  sales         Sale[]
+  serviceJobs   ServiceJob[]
+  notifications Notification[]
+
+  @@index([fullName])
+  @@index([doorNumber])
+  @@index([mobile])
+  @@index([area])
+  @@index([layout])
+  @@index([pinCode])
+  @@index([district])
+}
+
+model Engineer {
+  id          Int          @id @default(autoincrement())
+  name        String
+  phone       String?
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  serviceJobs ServiceJob[]
+
+  @@index([name])
+}
+
+model CustomerProduct {
+  id                Int             @id @default(autoincrement())
+  customer          Customer        @relation(fields: [customerId], references: [id])
+  customerId        Int
+
+  product           Product         @relation(fields: [productId], references: [id])
+  productId         Int
+
+  serialNumber      String?
+  purchaseDate      DateTime
+  warrantyExpiry    DateTime?
+  lastServiceDate   DateTime?
+
+  contracts         ServiceContract[]
+  serviceJobs       ServiceJob[]
+
+  @@index([customerId])
+  @@index([productId])
+  @@index([warrantyExpiry])
+}
+
+model Sale {
+  id            Int       @id @default(autoincrement())
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  customerId    Int
+  invoiceNumber String    @unique
+  date          DateTime  @default(now())
+  total         Int   
+  paymentMode   String?
+  notes         String?
+
+  items         SaleItem[]
+
+  @@index([customerId])
+  @@index([date])
+}
+
+model SaleItem {
+  id           Int           @id @default(autoincrement())
+  sale         Sale          @relation(fields: [saleId], references: [id])
+  saleId       Int
+
+  itemType     SaleItemType
+  product      Product?      @relation(fields: [productId], references: [id])
+  productId    Int?
+  sparePart    SparePart?    @relation(fields: [sparePartId], references: [id])
+  sparePartId  Int?
+
+  quantity     Int
+  unitPrice    Int       
+  lineTotal    Int       
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([sparePartId])
+}
+
+model ServiceJob {
+  id                 Int               @id @default(autoincrement())
+  customer           Customer          @relation(fields: [customerId], references: [id])
+  customerId         Int
+
+  customerProduct    CustomerProduct?  @relation(fields: [customerProductId], references: [id])
+  customerProductId  Int?
+
+  scheduledDate      DateTime
+  status             ServiceStatus     @default(PLANNED)
+  jobType            JobType           @default(SERVICE)
+  warrantyStatus     WarrantyStatus
+
+  engineer           Engineer?         @relation(fields: [engineerId], references: [id])
+  engineerId         Int?
+
+  problemDescription String?
+  resolutionNotes    String?
+  billedAmount       Int?          
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  items              ServiceItem[]
+  notifications      Notification[]
+
+  @@index([customerId])
+  @@index([customerProductId])
+  @@index([engineerId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+model ServiceItem {
+  id                 Int         @id @default(autoincrement())
+  serviceJob         ServiceJob  @relation(fields: [serviceJobId], references: [id])
+  serviceJobId       Int
+
+  product            Product?    @relation(fields: [productId], references: [id])
+  productId          Int?
+  sparePart          SparePart?  @relation(fields: [sparePartId], references: [id])
+  sparePartId        Int?
+
+  quantity           Int
+  unitPrice          Int     
+  coveredByWarranty  Boolean     @default(false)
+
+  @@index([serviceJobId])
+  @@index([productId])
+  @@index([sparePartId])
+}
+
+model ServiceContract {
+  id                Int             @id @default(autoincrement())
+  customerProduct   CustomerProduct @relation(fields: [customerProductId], references: [id])
+  customerProductId Int
+
+  contractType      ContractType
+  startDate         DateTime
+  endDate           DateTime
+  frequencyMonths   Int?
+  nextDueDate       DateTime?
+  isActive          Boolean         @default(true)
+
+  @@index([customerProductId])
+  @@index([endDate])
+  @@index([nextDueDate])
+}
+
+model InventoryTransaction {
+  id           Int                      @id @default(autoincrement())
+  itemType     InventoryItemType
+  product      Product?                 @relation(fields: [productId], references: [id])
+  productId    Int?
+  sparePart    SparePart?               @relation(fields: [sparePartId], references: [id])
+  sparePartId  Int?
+  quantity     Int
+  kind         InventoryTransactionKind
+  note         String?
+  createdAt    DateTime                 @default(now())
+
+  @@index([productId])
+  @@index([sparePartId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id           Int                  @id @default(autoincrement())
+  customer     Customer             @relation(fields: [customerId], references: [id])
+  customerId   Int
+  serviceJob   ServiceJob?          @relation(fields: [serviceJobId], references: [id])
+  serviceJobId Int?
+  channel      NotificationChannel
+  message      String
+  status       NotificationStatus   @default(QUEUED)
+  sentAt       DateTime?
+  createdAt    DateTime             @default(now())
+
+  @@index([customerId])
+  @@index([serviceJobId])
+  @@index([status])
+}
