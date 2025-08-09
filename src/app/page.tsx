@@ -37,15 +37,26 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // TODO: Fetch actual stats from API
-    setStats({
-      totalCustomers: 125,
-      totalProducts: 8,
-      totalSales: 45,
-      pendingServices: 12,
-      serviceDue30Days: 8,
-      overdueServices: 3
-    });
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const res = await fetch('/api/dashboard', { signal: controller.signal });
+        if (!res.ok) throw new Error('Failed to load dashboard');
+        const data = await res.json();
+        setStats({
+          totalCustomers: data.stats.totalCustomers,
+          totalProducts: data.stats.totalProducts,
+          totalSales: data.stats.totalSales,
+          pendingServices: data.stats.pendingServices,
+          serviceDue30Days: data.stats.serviceDue30Days,
+          overdueServices: data.stats.overdueServices,
+        });
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      }
+    }
+    load();
+    return () => controller.abort();
   }, []);
 
   const quickActions = [

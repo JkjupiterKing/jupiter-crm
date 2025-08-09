@@ -24,36 +24,52 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch customers from API
-    const mockCustomers: Customer[] = [
-      {
-        id: 1,
-        fullName: 'John Doe',
-        doorNumber: '123',
-        mobile: '9876543210',
-        area: 'Downtown',
-        layout: 'Main Street',
-        pinCode: '123456',
-        district: 'Central',
-        email: 'john@example.com',
-        createdAt: '2024-01-15'
-      },
-      {
-        id: 2,
-        fullName: 'Jane Smith',
-        doorNumber: '456',
-        mobile: '9876543211',
-        area: 'Uptown',
-        layout: 'Park Avenue',
-        pinCode: '123457',
-        district: 'North',
-        email: 'jane@example.com',
-        createdAt: '2024-01-20'
+    const controller = new AbortController();
+    async function load() {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('search', searchTerm);
+        const res = await fetch(`/api/customers${params.toString() ? `?${params.toString()}` : ''}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Failed to load customers');
+        const data = await res.json();
+        setCustomers(
+          data.map((c: any) => ({
+            id: c.id,
+            fullName: c.fullName,
+            doorNumber: c.doorNumber ?? undefined,
+            mobile: c.mobile,
+            area: c.area ?? undefined,
+            layout: c.layout ?? undefined,
+            pinCode: c.pinCode ?? undefined,
+            district: c.district ?? undefined,
+            email: c.email ?? undefined,
+            createdAt: c.createdAt,
+          }))
+        );
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setCustomers(mockCustomers);
-    setLoading(false);
-  }, []);
+    }
+    load();
+    return () => controller.abort();
+  }, [searchTerm]);
+
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this customer?')) return;
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      setCustomers((prev) => prev.filter((c) => c.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete');
+    }
+  }
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 
@@ -107,6 +123,8 @@ export default function CustomersPage() {
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
                 className="input-field"
+                disabled
+                title="Coming soon"
               >
                 <option value="all">All Customers</option>
                 <option value="in-warranty">In Warranty</option>
@@ -203,7 +221,7 @@ export default function CustomersPage() {
                           >
                             <Edit className="w-4 h-4" />
                           </Link>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

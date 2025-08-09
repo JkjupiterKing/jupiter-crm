@@ -35,15 +35,16 @@ export default function NewCustomerPage() {
     setLoading(true);
 
     try {
-      // TODO: Submit to API
-      console.log('Submitting customer data:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error('Failed to create customer');
       router.push('/customers');
     } catch (error) {
       console.error('Error creating customer:', error);
+      alert('Failed to create customer');
     } finally {
       setLoading(false);
     }

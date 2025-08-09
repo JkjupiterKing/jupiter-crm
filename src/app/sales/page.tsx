@@ -21,39 +21,37 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch sales from API
-    const mockSales: Sale[] = [
-      {
-        id: 1,
-        invoiceNumber: 'INV-2024-001',
-        customerName: 'John Doe',
-        date: '2024-01-15',
-        total: 15000,
-        paymentMode: 'Cash',
-        status: 'paid'
-      },
-      {
-        id: 2,
-        invoiceNumber: 'INV-2024-002',
-        customerName: 'Jane Smith',
-        date: '2024-01-20',
-        total: 8000,
-        paymentMode: 'Card',
-        status: 'paid'
-      },
-      {
-        id: 3,
-        invoiceNumber: 'INV-2024-003',
-        customerName: 'Bob Johnson',
-        date: '2024-01-25',
-        total: 12000,
-        paymentMode: 'UPI',
-        status: 'pending'
+    const controller = new AbortController();
+    async function load() {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('search', searchTerm);
+        const res = await fetch(`/api/sales${params.toString() ? `?${params.toString()}` : ''}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Failed to load sales');
+        const data = await res.json();
+        setSales(
+          data.map((s: any) => ({
+            id: s.id,
+            invoiceNumber: s.invoiceNumber,
+            customerName: s.customer?.fullName ?? '—',
+            date: s.date,
+            total: s.total,
+            paymentMode: s.paymentMode ?? undefined,
+            status: 'paid',
+          }))
+        );
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setSales(mockSales);
-    setLoading(false);
-  }, []);
+    }
+    load();
+    return () => controller.abort();
+  }, [searchTerm]);
 
   const filteredSales = sales.filter(sale => {
     const matchesSearch = 

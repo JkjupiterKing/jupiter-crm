@@ -22,42 +22,40 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch products from API
-    const mockProducts: Product[] = [
-      {
-        id: 1,
-        name: 'RO Water Purifier 100L',
-        sku: 'RO-100L',
-        description: 'Reverse Osmosis Water Purifier with 100L capacity',
-        price: 15000,
-        warrantyMonths: 12,
-        stockQuantity: 25,
-        isActive: true
-      },
-      {
-        id: 2,
-        name: 'UV Water Purifier 50L',
-        sku: 'UV-50L',
-        description: 'Ultraviolet Water Purifier with 50L capacity',
-        price: 8000,
-        warrantyMonths: 12,
-        stockQuantity: 15,
-        isActive: true
-      },
-      {
-        id: 3,
-        name: 'RO Filter Cartridge',
-        sku: 'RO-FILTER-001',
-        description: 'Replacement RO filter cartridge',
-        price: 500,
-        warrantyMonths: 6,
-        stockQuantity: 100,
-        isActive: true
+    const controller = new AbortController();
+    async function load() {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('search', searchTerm);
+        if (filterBy !== 'all') params.set('filterBy', filterBy);
+        const res = await fetch(`/api/products${params.toString() ? `?${params.toString()}` : ''}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Failed to load products');
+        const data = await res.json();
+        setProducts(data);
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setProducts(mockProducts);
-    setLoading(false);
-  }, []);
+    }
+    load();
+    return () => controller.abort();
+  }, [searchTerm, filterBy]);
+
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this product?')) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete');
+    }
+  }
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = 
@@ -157,7 +155,7 @@ export default function ProductsPage() {
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

@@ -29,59 +29,51 @@ export default function ServicesPage() {
     if (filterParam) {
       setFilterBy(filterParam);
     }
-
-    // TODO: Fetch services from API
-    const mockServices: ServiceJob[] = [
-      {
-        id: 1,
-        customerName: 'John Doe',
-        scheduledDate: '2024-01-15',
-        status: 'planned',
-        jobType: 'service',
-        warrantyStatus: 'in_warranty',
-        engineerName: 'Mike Johnson'
-      },
-      {
-        id: 2,
-        customerName: 'Jane Smith',
-        scheduledDate: '2024-01-20',
-        status: 'completed',
-        jobType: 'repair',
-        warrantyStatus: 'out_of_warranty',
-        engineerName: 'Sarah Wilson',
-        billedAmount: 1500
-      },
-      {
-        id: 3,
-        customerName: 'Bob Johnson',
-        scheduledDate: '2024-01-25',
-        status: 'planned',
-        jobType: 'installation',
-        warrantyStatus: 'in_contract',
-        engineerName: 'Mike Johnson'
-      },
-      {
-        id: 4,
-        customerName: 'Alice Brown',
-        scheduledDate: '2024-01-10',
-        status: 'planned',
-        jobType: 'service',
-        warrantyStatus: 'in_warranty',
-        engineerName: 'Mike Johnson'
-      },
-      {
-        id: 5,
-        customerName: 'Charlie Wilson',
-        scheduledDate: '2024-01-05',
-        status: 'planned',
-        jobType: 'repair',
-        warrantyStatus: 'out_of_warranty',
-        engineerName: 'Sarah Wilson'
-      }
-    ];
-    setServices(mockServices);
-    setLoading(false);
   }, [searchParams]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('search', searchTerm);
+        // Map UI filter to API filter values
+        const filterMap: Record<string, string> = {
+          planned: 'planned',
+          completed: 'completed',
+          cancelled: 'cancelled',
+          no_show: 'no_show',
+          today: 'today',
+          overdue: 'overdue',
+        };
+        if (filterBy in filterMap) params.set('filterBy', filterMap[filterBy]);
+        const res = await fetch(`/api/services${params.toString() ? `?${params.toString()}` : ''}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Failed to load services');
+        const data = await res.json();
+        setServices(
+          data.map((s: any) => ({
+            id: s.id,
+            customerName: s.customer?.fullName ?? '—',
+            scheduledDate: s.scheduledDate,
+            status: s.status.toLowerCase(),
+            jobType: s.jobType.toLowerCase(),
+            warrantyStatus: s.warrantyStatus.toLowerCase(),
+            engineerName: s.engineer?.name ?? undefined,
+            billedAmount: s.billedAmount ?? undefined,
+          }))
+        );
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+    return () => controller.abort();
+  }, [searchTerm, filterBy]);
 
   const filteredServices = services.filter(service => {
     const matchesSearch = 
