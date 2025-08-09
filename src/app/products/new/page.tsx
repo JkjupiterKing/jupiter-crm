@@ -10,6 +10,7 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    category: '',
     sku: '',
     description: '',
     price: '',
@@ -75,6 +76,10 @@ export default function NewProductPage() {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
               <input name="name" value={formData.name} onChange={handleChange} required className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <input name="category" value={formData.category} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">SKU *</label>

@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -67,6 +66,7 @@ enum ContractType {
 model Product {
   id               Int                  @id @default(autoincrement())
   name             String
+  category         String?
   sku              String               @unique
   description      String?
   price            Int?             

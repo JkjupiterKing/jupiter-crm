@@ -31,6 +31,7 @@ export async function PATCH(
       where: { id },
       data: {
         name: body.name,
+        category: body.category,
         sku: body.sku,
         description: body.description,
         price: typeof body.price === 'number' ? body.price : body.price ? parseInt(body.price) : null,

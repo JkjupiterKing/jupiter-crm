@@ -98,7 +98,7 @@ export default function Dashboard() {
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       href: '/services?filter=overdue',
-      count: 3
+      count: stats.overdueServices
     },
     {
       type: 'info',
@@ -107,7 +107,7 @@ export default function Dashboard() {
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
       href: '/services?filter=due_30_days',
-      count: 8
+      count: stats.serviceDue30Days
     },
     {
       type: 'success',
@@ -116,7 +116,7 @@ export default function Dashboard() {
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       href: '/services?filter=completed_month',
-      count: 12
+  count: 0 // TODO: Replace with real value if available from API
     }
   ];
 

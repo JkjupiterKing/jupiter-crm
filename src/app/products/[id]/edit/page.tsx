@@ -21,6 +21,7 @@ export default function EditProductPage() {
         const data = await res.json();
         setFormData({
           name: data.name ?? '',
+          category: data.category ?? '',
           sku: data.sku ?? '',
           description: data.description ?? '',
           price: data.price ?? '',
@@ -94,6 +95,10 @@ export default function EditProductPage() {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
               <input name="name" value={formData.name} onChange={handleChange} required className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <input name="category" value={formData.category} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">SKU *</label>

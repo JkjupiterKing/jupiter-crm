@@ -1,0 +1,8 @@
+"Module","Add","Edit","Delete","View/Detail","Settings/Other"
+"Customers","✓","✓","✗","404 error","N/A"
+"Products","✓ (UI bug)","✓ (UI bug)","✗","404 error","N/A"
+"Spare Parts","✓","404 error","✗","404 error","N/A"
+"Sales","✓","✗/404 error","✗","404 error","N/A"
+"Services","Partial","Partial","✗","404 error","Data/list mismatch with dashboard"
+"Reports","✓","✓","N/A","✓","N/A"
+"Settings","✓/glitch","✓/glitch","N/A","N/A","Major sections “under development”/placeholders"

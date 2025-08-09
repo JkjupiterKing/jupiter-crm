@@ -1,0 +1,57 @@
+Delete Customer	No	Functionality not implemented
+View Details	No	Detail page returns 404 error
+
+Products
+
+Edit Product: Edit works but with similar UI glitches as above.
+
+Delete Product: Not implemented, there is no delete option.
+
+Product Details: Accessing product details and inventory URLs shows 404 errors.
+
+Spare Parts: Add works, edit gives 404 error, no delete available.
+
+Sales
+
+Add Sale: Sale can be created and appears in the table.
+
+Edit Sale: No edit links/buttons, all direct /sales/:id or /sales/:id/edit URLs produce 404 errors.
+
+Delete Sale: Not implemented.
+
+Sale Details: All detail view pages show 404 errors.
+
+Services
+
+Add/Schedule Service: Form loads but date input is buggy and prevents most successful submissions.
+
+Edit Service: Edit form appears but fails save (again due to date input issues).
+
+Delete Service: Not implemented and /delete URLs return 404.
+
+Detail View: 404 on direct access for every service.
+
+Filters: Dashboard shows overdue/due services, but filter views in the list always show “No services found” (data mismatch/sync problem).
+
+Reports
+
+All core analytics and export features work for Sales, Customer, Inventory, Service, Warranty, and Revenue Reports.
+
+Data is displayed and analytics metrics show expected content (no critical issues noticed in reporting).
+
+Settings
+
+General Settings: Company details and application settings have broken input behavior (editing concatenates content).
+
+Notifications: SMS/WhatsApp/APIs input fields work; notification prefs are functional.
+
+Database, Users, Security, Backup & Restore: All these sections are under development with no options implemented and just show a placeholder.
+
+Other General Issues
+
+Delete functionality: Consistently missing in all modules tested.
+
+Detail/View pages: All direct access via URL produces 404 for nearly every module (customers, products, sales, services, spare parts).
+
+Several sections under settings are not available at all.
+

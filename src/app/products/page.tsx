@@ -7,6 +7,7 @@ import { Search, Plus, Edit, Trash2, Package, Settings } from 'lucide-react';
 interface Product {
   id: number;
   name: string;
+  category?: string;
   sku: string;
   description?: string;
   price?: number;
@@ -147,6 +148,9 @@ export default function ProductsPage() {
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
                       <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                      {product.category && (
+                        <p className="text-xs text-gray-400">Category: {product.category}</p>
+                      )}
                     </div>
                     <div className="flex space-x-2">
                       <Link

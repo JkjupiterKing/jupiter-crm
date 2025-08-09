@@ -1,3 +1,6 @@
+-- Combined initial schema for Jupiter CRM
+-- This file combines all migrations into a single initial schema
+
 -- CreateTable
 CREATE TABLE "Product" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -9,7 +12,8 @@ CREATE TABLE "Product" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "stockQuantity" INTEGER NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" DATETIME NOT NULL,
+    "category" TEXT
 );
 
 -- CreateTable
@@ -172,123 +176,43 @@ CREATE TABLE "Notification" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Product_sku_key" ON "Product"("sku");
-
--- CreateIndex
 CREATE INDEX "Product_name_idx" ON "Product"("name");
-
--- CreateIndex
 CREATE INDEX "Product_sku_idx" ON "Product"("sku");
-
--- CreateIndex
 CREATE UNIQUE INDEX "SparePart_sku_key" ON "SparePart"("sku");
-
--- CreateIndex
 CREATE INDEX "SparePart_name_idx" ON "SparePart"("name");
-
--- CreateIndex
 CREATE INDEX "SparePart_sku_idx" ON "SparePart"("sku");
-
--- CreateIndex
 CREATE INDEX "SparePart_productId_idx" ON "SparePart"("productId");
-
--- CreateIndex
 CREATE INDEX "Customer_fullName_idx" ON "Customer"("fullName");
-
--- CreateIndex
 CREATE INDEX "Customer_doorNumber_idx" ON "Customer"("doorNumber");
-
--- CreateIndex
 CREATE INDEX "Customer_mobile_idx" ON "Customer"("mobile");
-
--- CreateIndex
 CREATE INDEX "Customer_area_idx" ON "Customer"("area");
-
--- CreateIndex
 CREATE INDEX "Customer_layout_idx" ON "Customer"("layout");
-
--- CreateIndex
 CREATE INDEX "Customer_pinCode_idx" ON "Customer"("pinCode");
-
--- CreateIndex
 CREATE INDEX "Customer_district_idx" ON "Customer"("district");
-
--- CreateIndex
 CREATE INDEX "Engineer_name_idx" ON "Engineer"("name");
-
--- CreateIndex
 CREATE INDEX "CustomerProduct_customerId_idx" ON "CustomerProduct"("customerId");
-
--- CreateIndex
 CREATE INDEX "CustomerProduct_productId_idx" ON "CustomerProduct"("productId");
-
--- CreateIndex
 CREATE INDEX "CustomerProduct_warrantyExpiry_idx" ON "CustomerProduct"("warrantyExpiry");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Sale_invoiceNumber_key" ON "Sale"("invoiceNumber");
-
--- CreateIndex
 CREATE INDEX "Sale_customerId_idx" ON "Sale"("customerId");
-
--- CreateIndex
 CREATE INDEX "Sale_date_idx" ON "Sale"("date");
-
--- CreateIndex
 CREATE INDEX "SaleItem_saleId_idx" ON "SaleItem"("saleId");
-
--- CreateIndex
 CREATE INDEX "SaleItem_productId_idx" ON "SaleItem"("productId");
-
--- CreateIndex
 CREATE INDEX "SaleItem_sparePartId_idx" ON "SaleItem"("sparePartId");
-
--- CreateIndex
 CREATE INDEX "ServiceJob_customerId_idx" ON "ServiceJob"("customerId");
-
--- CreateIndex
 CREATE INDEX "ServiceJob_customerProductId_idx" ON "ServiceJob"("customerProductId");
-
--- CreateIndex
 CREATE INDEX "ServiceJob_engineerId_idx" ON "ServiceJob"("engineerId");
-
--- CreateIndex
 CREATE INDEX "ServiceJob_scheduledDate_idx" ON "ServiceJob"("scheduledDate");
-
--- CreateIndex
 CREATE INDEX "ServiceJob_status_idx" ON "ServiceJob"("status");
-
--- CreateIndex
 CREATE INDEX "ServiceItem_serviceJobId_idx" ON "ServiceItem"("serviceJobId");
-
--- CreateIndex
 CREATE INDEX "ServiceItem_productId_idx" ON "ServiceItem"("productId");
-
--- CreateIndex
 CREATE INDEX "ServiceItem_sparePartId_idx" ON "ServiceItem"("sparePartId");
-
--- CreateIndex
 CREATE INDEX "ServiceContract_customerProductId_idx" ON "ServiceContract"("customerProductId");
-
--- CreateIndex
 CREATE INDEX "ServiceContract_endDate_idx" ON "ServiceContract"("endDate");
-
--- CreateIndex
 CREATE INDEX "ServiceContract_nextDueDate_idx" ON "ServiceContract"("nextDueDate");
-
--- CreateIndex
 CREATE INDEX "InventoryTransaction_productId_idx" ON "InventoryTransaction"("productId");
-
--- CreateIndex
 CREATE INDEX "InventoryTransaction_sparePartId_idx" ON "InventoryTransaction"("sparePartId");
-
--- CreateIndex
 CREATE INDEX "InventoryTransaction_createdAt_idx" ON "InventoryTransaction"("createdAt");
-
--- CreateIndex
 CREATE INDEX "Notification_customerId_idx" ON "Notification"("customerId");
-
--- CreateIndex
 CREATE INDEX "Notification_serviceJobId_idx" ON "Notification"("serviceJobId");
-
--- CreateIndex
 CREATE INDEX "Notification_status_idx" ON "Notification"("status");
