@@ -17,12 +17,12 @@ export async function GET(request: NextRequest) {
       prisma.product.count(),
       prisma.sale.count(),
       prisma.serviceJob.count({
-        where: { status: 'PLANNED' },
+        where: { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
       }),
       prisma.serviceJob.count({
         where: {
-          status: 'PLANNED',
-          scheduledDate: {
+          status: { in: ['PLANNED', 'UNSCHEDULED'] },
+          serviceDueDate: {
             gte: new Date(),
             lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           },
@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
       }),
       prisma.serviceJob.count({
         where: {
-          status: 'PLANNED',
-          scheduledDate: {
+          status: { in: ['PLANNED', 'UNSCHEDULED'] },
+          serviceDueDate: {
             lt: new Date(),
           },
         },

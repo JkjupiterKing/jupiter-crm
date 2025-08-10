@@ -14,6 +14,7 @@ export default function NewServicePage() {
     customerId: '',
     customerProductId: '',
     scheduledDate: '',
+    serviceDueDate: '',
     status: 'PLANNED',
     jobType: 'SERVICE',
     warrantyStatus: 'IN_WARRANTY',
@@ -56,6 +57,7 @@ export default function NewServicePage() {
         customerId: Number(formData.customerId),
         customerProductId: formData.customerProductId ? Number(formData.customerProductId) : null,
         scheduledDate: formData.scheduledDate,
+        serviceDueDate: formData.serviceDueDate,
         engineerId: formData.engineerId ? Number(formData.engineerId) : null,
         billedAmount: formData.billedAmount ? Number(formData.billedAmount) : null,
         saleId: formData.saleId ? Number(formData.saleId) : null,
@@ -107,8 +109,12 @@ export default function NewServicePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date *</label>
-              <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} required className="input-field" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
+              <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Service Due Date *</label>
+              <input type="datetime-local" name="serviceDueDate" value={formData.serviceDueDate} onChange={handleChange} required className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Job Type</label>

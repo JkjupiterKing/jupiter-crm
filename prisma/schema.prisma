@@ -33,6 +33,7 @@ enum ServiceStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
+  UNSCHEDULED
 }
 
 enum JobType {
@@ -261,7 +262,8 @@ model ServiceJob {
   saleId             Int?
   sale               Sale?             @relation(fields: [saleId], references: [id])
 
-  scheduledDate      DateTime
+  scheduledDate      DateTime?
+  serviceDueDate     DateTime
   status             ServiceStatus     @default(PLANNED)
   jobType            JobType           @default(SERVICE)
   warrantyStatus     WarrantyStatus
@@ -284,6 +286,7 @@ model ServiceJob {
   @@index([customerProductId])
   @@index([engineerId])
   @@index([scheduledDate])
+  @@index([serviceDueDate])
   @@index([status])
 }
 

@@ -28,6 +28,7 @@ export default function EditServicePage() {
           customerId: data.customerId,
           customerProductId: data.customerProductId ?? '',
           scheduledDate: data.scheduledDate ? new Date(data.scheduledDate).toISOString().slice(0, 16) : '',
+          serviceDueDate: data.serviceDueDate ? new Date(data.serviceDueDate).toISOString().slice(0, 16) : '',
           status: data.status,
           jobType: data.jobType,
           warrantyStatus: data.warrantyStatus,
@@ -58,7 +59,8 @@ export default function EditServicePage() {
         ...formData,
         customerId: Number(formData.customerId),
         customerProductId: formData.customerProductId ? Number(formData.customerProductId) : null,
-        scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate).toISOString() : undefined,
+        scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate).toISOString() : null,
+        serviceDueDate: formData.serviceDueDate ? new Date(formData.serviceDueDate).toISOString() : undefined,
         engineerId: formData.engineerId ? Number(formData.engineerId) : null,
         billedAmount: formData.billedAmount ? Number(formData.billedAmount) : null,
       };
@@ -110,8 +112,12 @@ export default function EditServicePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date *</label>
-              <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} required className="input-field" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
+              <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Service Due Date *</label>
+              <input type="datetime-local" name="serviceDueDate" value={formData.serviceDueDate} onChange={handleChange} required className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -120,6 +126,7 @@ export default function EditServicePage() {
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
                 <option value="NO_SHOW">No Show</option>
+                <option value="UNSCHEDULED">Unscheduled</option>
               </select>
             </div>
             <div>
