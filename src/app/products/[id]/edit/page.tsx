@@ -32,6 +32,7 @@ export default function EditProductPage() {
           model: data.model ?? '',
           warrantyPeriod: data.warrantyPeriod ?? 12,
           isActive: data.isActive ?? true,
+          service_frequency: data.service_frequency ?? 'NONE',
         });
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
@@ -43,7 +44,7 @@ export default function EditProductPage() {
     return () => controller.abort();
   }, [params.id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
     setFormData((prev: any) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
@@ -137,6 +138,15 @@ export default function EditProductPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Warranty (months)</label>
               <input type="number" name="warrantyPeriod" value={formData.warrantyPeriod as any} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Service Frequency</label>
+              <select name="service_frequency" value={formData.service_frequency} onChange={handleChange} className="input-field">
+                <option value="NONE">None</option>
+                <option value="QUARTERLY">Quarterly</option>
+                <option value="HALF_YEARLY">Half-Yearly</option>
+                <option value="YEARLY">Yearly</option>
+              </select>
             </div>
             <div className="flex items-center space-x-2">
               <input id="isActive" type="checkbox" name="isActive" checked={!!formData.isActive} onChange={handleChange} />

@@ -21,17 +21,19 @@ export default function NewServicePage() {
     problemDescription: '',
     billedAmount: '',
     items: [],
+    saleId: '',
   });
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {
-        const [customersRes] = await Promise.all([
+        const [customersRes, engineersRes] = await Promise.all([
           fetch('/api/customers', { signal: controller.signal }),
+          fetch('/api/engineers', { signal: controller.signal }),
         ]);
         if (customersRes.ok) setCustomers(await customersRes.json());
-        // Engineers list would require a new API; keep empty for now
+        if (engineersRes.ok) setEngineers(await engineersRes.json());
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
       }
@@ -56,6 +58,7 @@ export default function NewServicePage() {
         scheduledDate: formData.scheduledDate,
         engineerId: formData.engineerId ? Number(formData.engineerId) : null,
         billedAmount: formData.billedAmount ? Number(formData.billedAmount) : null,
+        saleId: formData.saleId ? Number(formData.saleId) : null,
       };
       const res = await fetch('/api/services', {
         method: 'POST',
@@ -122,6 +125,19 @@ export default function NewServicePage() {
                 <option value="IN_CONTRACT">In Contract</option>
                 <option value="OUT_OF_WARRANTY">Out of Warranty</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Engineer</label>
+              <select name="engineerId" value={formData.engineerId} onChange={handleChange} className="input-field">
+                <option value="">Select engineer</option>
+                {engineers.map((e: any) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sale ID</label>
+              <input type="text" name="saleId" value={formData.saleId} onChange={handleChange} className="input-field" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Problem Description</label>

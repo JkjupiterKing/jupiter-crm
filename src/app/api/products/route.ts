@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       model,
       warrantyPeriod,
       isActive = true,
+      service_frequency,
     } = body;
 
     // Validate required fields
@@ -119,6 +120,7 @@ export async function POST(request: NextRequest) {
         model: model || '',
         warrantyPeriod: warrantyPeriod || 0,
         isActive,
+        service_frequency: service_frequency || 'NONE',
       },
     });
 

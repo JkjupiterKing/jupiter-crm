@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         jobType: body.jobType,
         warrantyStatus: body.warrantyStatus,
         engineerId: body.engineerId,
+        saleId: body.saleId,
         problemDescription: body.problemDescription,
         resolutionNotes: body.resolutionNotes,
         billedAmount: body.billedAmount ? parseInt(body.billedAmount) : null,

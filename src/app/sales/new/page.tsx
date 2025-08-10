@@ -9,6 +9,7 @@ export default function NewSalePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [formData, setFormData] = useState<any>({
     customerId: '',
     invoiceNumber: '',
@@ -23,8 +24,12 @@ export default function NewSalePage() {
     const controller = new AbortController();
     async function load() {
       try {
-        const res = await fetch('/api/customers', { signal: controller.signal });
-        if (res.ok) setCustomers(await res.json());
+        const [customersRes, productsRes] = await Promise.all([
+          fetch('/api/customers', { signal: controller.signal }),
+          fetch('/api/products', { signal: controller.signal }),
+        ]);
+        if (customersRes.ok) setCustomers(await customersRes.json());
+        if (productsRes.ok) setProducts(await productsRes.json());
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
       }
@@ -37,6 +42,39 @@ export default function NewSalePage() {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
+
+  const handleItemChange = (index: number, field: string, value: any) => {
+    const newItems = [...formData.items];
+    newItems[index][field] = value;
+    setFormData((prev: any) => ({ ...prev, items: newItems }));
+  };
+
+  const addItem = () => {
+    setFormData((prev: any) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { productId: '', quantity: 1, unitPrice: 0, lineTotal: 0 },
+      ],
+    }));
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = [...formData.items];
+    newItems.splice(index, 1);
+    setFormData((prev: any) => ({ ...prev, items: newItems }));
+  };
+
+  useEffect(() => {
+    const total = formData.items.reduce((acc: number, item: any) => {
+      const product = products.find(p => p.id === Number(item.productId));
+      const price = product ? product.unitPrice : 0;
+      const lineTotal = (Number(item.quantity) || 0) * (price || 0);
+      return acc + lineTotal;
+    }, 0);
+    setFormData((prev: any) => ({ ...prev, totalAmount: total }));
+  }, [formData.items, products]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +154,70 @@ export default function NewSalePage() {
               <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="input-field" />
             </div>
           </div>
+
+          <div className="mt-8">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Sale Items</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line Total</th>
+                    <th className="relative px-6 py-3">
+                      <span className="sr-only">Remove</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {formData.items.map((item: any, index: number) => {
+                    const product = products.find(p => p.id === Number(item.productId));
+                    const price = product ? product.unitPrice : 0;
+                    const lineTotal = (Number(item.quantity) || 0) * (price || 0);
+
+                    return (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <select
+                            value={item.productId}
+                            onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                            className="input-field"
+                          >
+                            <option value="">Select a product</option>
+                            {products.map(p => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                            className="input-field"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{price}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{lineTotal}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button type="button" onClick={() => removeItem(index)} className="text-red-600 hover:text-red-900">
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4">
+              <button type="button" onClick={addItem} className="btn-secondary">
+                Add Item
+              </button>
+            </div>
+          </div>
+
           <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
             <Link href="/sales" className="btn-secondary">Cancel</Link>
             <button type="submit" disabled={loading} className="btn-primary flex items-center space-x-2 disabled:opacity-50">
