@@ -196,6 +196,8 @@ model CustomerProduct {
   purchaseDate      DateTime
   warrantyExpiry    DateTime?
   lastServiceDate   DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   contracts         ServiceContract[]
   serviceJobs       ServiceJob[]
