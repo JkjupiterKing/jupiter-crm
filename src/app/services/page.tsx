@@ -47,12 +47,8 @@ export default function ServicesPage() {
           no_show: 'no_show',
           today: 'today',
           overdue: 'overdue',
-          due_30_days: 'due_30_days',
-          completed_month: 'completed_month',
         };
-        if (filterBy !== 'all' && filterBy in filterMap) {
-          params.set('filterBy', filterMap[filterBy]);
-        }
+        if (filterBy in filterMap) params.set('filterBy', filterMap[filterBy]);
         const res = await fetch(`/api/services${params.toString() ? `?${params.toString()}` : ''}`, {
           signal: controller.signal,
         });
@@ -81,10 +77,33 @@ export default function ServicesPage() {
     return () => controller.abort();
   }, [searchTerm, filterBy]);
 
-  const filteredServices = services.filter(service =>
-    service.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (service.engineerName && service.engineerName.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredServices = services.filter(service => {
+    const matchesSearch = 
+      service.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.engineerName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (filterBy === 'planned') return matchesSearch && service.status === 'PLANNED';
+    if (filterBy === 'completed') return matchesSearch && service.status === 'COMPLETED';
+    if (filterBy === 'cancelled') return matchesSearch && service.status === 'CANCELLED';
+    if (filterBy === 'no_show') return matchesSearch && service.status === 'NO_SHOW';
+    if (filterBy === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      return matchesSearch && service.scheduledDate === today;
+    }
+    if (filterBy === 'overdue') {
+      const today = new Date();
+      const scheduledDate = new Date(service.scheduledDate);
+      return matchesSearch && scheduledDate < today && service.status === 'PLANNED';
+    }
+    if (filterBy === 'due_30_days') {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      const scheduledDate = new Date(service.scheduledDate);
+      return matchesSearch && scheduledDate >= today && scheduledDate <= thirtyDaysFromNow && service.status === 'PLANNED';
+    }
+    return matchesSearch;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -127,6 +146,15 @@ export default function ServicesPage() {
     }
   };
 
+  // Calculate metrics using correct uppercase status values
+  const plannedServices = services.filter(s => s.status === 'PLANNED').length;
+  const completedServices = services.filter(s => s.status === 'COMPLETED').length;
+  const overdueServices = services.filter(s => {
+    const today = new Date();
+    const scheduledDate = new Date(s.scheduledDate);
+    return scheduledDate < today && s.status === 'PLANNED';
+  }).length;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -146,6 +174,57 @@ export default function ServicesPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Planned</p>
+                <p className="text-2xl font-bold text-gray-900">{plannedServices}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-green-100">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-2xl font-bold text-gray-900">{completedServices}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-red-100">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Overdue</p>
+                <p className="text-2xl font-bold text-gray-900">{overdueServices}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-purple-100">
+                <Wrench className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total</p>
+                <p className="text-2xl font-bold text-gray-900">{services.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row gap-4">
