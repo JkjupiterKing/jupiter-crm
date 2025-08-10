@@ -21,6 +21,7 @@ interface DashboardStats {
   totalCustomers: number;
   totalProducts: number;
   totalSales: number;
+  totalServiceRequests: number;
   serviceDue30Days: number;
   overdueServices: number;
   completedThisMonth: number;
@@ -31,6 +32,7 @@ export default function Dashboard() {
     totalCustomers: 0,
     totalProducts: 0,
     totalSales: 0,
+    totalServiceRequests: 0,
     serviceDue30Days: 0,
     overdueServices: 0,
     completedThisMonth: 0
@@ -59,6 +61,7 @@ export default function Dashboard() {
             totalCustomers: data.stats.totalCustomers,
             totalProducts: data.stats.totalProducts,
             totalSales: data.stats.totalSales,
+            totalServiceRequests: data.stats.totalServiceRequests,
           }));
         }
 
@@ -150,10 +153,10 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         
-        {/* Alerts & Notifications - Main Area */}
+        {/* Alerts - Main Area */}
         <div className="mb-8">
           <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Alerts & Notifications</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Alerts</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {alerts.map((alert, index) => (
                 <Link
@@ -233,6 +236,16 @@ export default function Dashboard() {
                   <div className="ml-2">
                     <p className="text-xs font-medium text-gray-600">Total Sales</p>
                     <p className="text-base font-bold text-gray-900">{stats.totalSales}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center p-1.5 bg-orange-50 rounded-md">
+                  <div className="p-1 rounded-full bg-orange-100">
+                    <Wrench className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <div className="ml-2">
+                    <p className="text-xs font-medium text-gray-600">Total Service Requests</p>
+                    <p className="text-base font-bold text-gray-900">{stats.totalServiceRequests}</p>
                   </div>
                 </div>
 
