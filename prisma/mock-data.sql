@@ -74,10 +74,10 @@ INSERT INTO SaleItem (id, saleId, productId, quantity, unitPrice, lineTotal, ite
 -- Insert Service Jobs
 INSERT INTO ServiceJob (id, customerId, engineerId, scheduledDate, serviceDueDate, status, jobType, warrantyStatus, billedAmount, notes, createdAt, updatedAt) VALUES
 (1, 1, 2, '2024-02-01 09:00:00', '2024-02-01 09:00:00', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'Installation of industrial air compressor', '2024-01-25 10:00:00', '2024-01-25 10:00:00'),
-(2, 2, 1, '2024-02-02 10:00:00', '2024-02-02 10:00:00', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'HVAC system installation and commissioning', '2024-01-26 11:00:00', '2024-01-26 11:00:00'),
+(2, 2, 1, '2024-02-02 10:00:00', NULL, 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'HVAC system installation and commissioning', '2024-01-26 11:00:00', '2024-01-26 11:00:00'),
 (3, 3, 3, '2024-02-03 11:00:00', '2024-02-03 11:00:00', 'COMPLETED', 'SERVICE', 'IN_WARRANTY', 2000, 'Annual maintenance of water pump system', '2024-01-27 12:00:00', '2024-01-27 12:00:00'),
-(4, 4, 5, '2024-02-04 12:00:00', '2024-02-04 12:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Conveyor belt repair and maintenance', '2024-01-28 13:00:00', '2024-01-28 13:00:00'),
-(5, 5, 4, '2024-02-05 13:00:00', '2024-02-05 13:00:00', 'PLANNED', 'SERVICE', 'IN_CONTRACT', NULL, 'Monthly generator maintenance service', '2024-01-29 14:00:00', '2024-01-29 14:00:00'),
+(4, 4, 5, '2024-02-04 12:00:00', '2025-12-04 12:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Conveyor belt repair and maintenance', '2024-01-28 13:00:00', '2024-01-28 13:00:00'),
+(5, 5, 4, '2024-02-05 13:00:00', '2026-02-05 13:00:00', 'PLANNED', 'SERVICE', 'IN_CONTRACT', NULL, 'Monthly generator maintenance service', '2024-01-29 14:00:00', '2024-01-29 14:00:00'),
 -- Mock data for dashboard alerts (relative to 2025-08-10)
 (6, 1, NULL, '2025-08-01 10:00:00', '2025-08-01 10:00:00', 'PLANNED', 'SERVICE', 'IN_WARRANTY', NULL, 'Mock: Overdue service', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
 (7, 2, 1, '2025-08-20 14:00:00', '2025-08-20 14:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Mock: Service due soon', '2025-08-10 11:00:00', '2025-08-10 11:00:00'),
