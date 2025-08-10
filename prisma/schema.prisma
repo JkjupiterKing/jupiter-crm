@@ -63,16 +63,28 @@ enum ContractType {
   AMC
 }
 
+enum SaleStatus {
+  PAID
+  PENDING
+  CANCELLED
+}
+
 model Product {
   id               Int                  @id @default(autoincrement())
   name             String
   category         String?
   sku              String               @unique
   description      String?
-  price            Int?             
-  warrantyMonths   Int                  @default(12)
+  // Standardized inventory fields
+  currentStock     Int                  @default(0)
+  reorderLevel     Int                  @default(5)
+  unitPrice        Int?             
+  costPrice        Int?
+  manufacturer     String?
+  model            String?
+  warrantyPeriod   Int                  @default(12)
+  // Product status
   isActive         Boolean              @default(true)
-  stockQuantity    Int                  @default(0)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
@@ -84,6 +96,8 @@ model Product {
 
   @@index([name])
   @@index([sku])
+  @@index([category])
+  @@index([manufacturer])
 }
 
 model SparePart {
@@ -112,15 +126,19 @@ model SparePart {
 model Customer {
   id            Int            @id @default(autoincrement())
   fullName      String
-  doorNumber    String?
-  street        String?
-  area          String?
-  layout        String?
-  district      String?
-  pinCode       String?
+  email         String?
   mobile        String
   altMobile     String?
-  email         String?
+  companyName   String?
+  // Standardized address fields
+  address       String?
+  street        String?
+  city          String?
+  state         String?
+  pincode       String?
+  // Customer status and metadata
+  isVIP         Boolean        @default(false)
+  isActive      Boolean        @default(true)
   notes         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -129,27 +147,33 @@ model Customer {
   sales         Sale[]
   serviceJobs   ServiceJob[]
   notifications Notification[]
+  contracts     Contract[]
 
   @@index([fullName])
-  @@index([doorNumber])
+  @@index([email])
   @@index([mobile])
-  @@index([area])
-  @@index([layout])
-  @@index([pinCode])
-  @@index([district])
+  @@index([companyName])
+  @@index([city])
+  @@index([state])
+  @@index([pincode])
 }
 
 model Engineer {
-  id          Int          @id @default(autoincrement())
-  name        String
-  phone       String?
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             Int          @id @default(autoincrement())
+  name           String
+  email          String?
+  phone          String?
+  mobile         String?
+  specialization String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  serviceJobs ServiceJob[]
+  serviceJobs    ServiceJob[]
 
   @@index([name])
+  @@index([email])
+  @@index([specialization])
 }
 
 model CustomerProduct {
@@ -178,15 +202,19 @@ model Sale {
   customer      Customer  @relation(fields: [customerId], references: [id])
   customerId    Int
   invoiceNumber String    @unique
-  date          DateTime  @default(now())
-  total         Int   
+  saleDate      DateTime  @default(now())
+  totalAmount   Int   
   paymentMode   String?
+  status        SaleStatus @default(PAID)
   notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   items         SaleItem[]
 
   @@index([customerId])
-  @@index([date])
+  @@index([saleDate])
+  @@index([status])
 }
 
 model SaleItem {
@@ -202,7 +230,9 @@ model SaleItem {
 
   quantity     Int
   unitPrice    Int       
-  lineTotal    Int       
+  lineTotal    Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([saleId])
   @@index([productId])
@@ -228,6 +258,7 @@ model ServiceJob {
   problemDescription String?
   resolutionNotes    String?
   billedAmount       Int?          
+  notes              String?
 
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -278,21 +309,45 @@ model ServiceContract {
   @@index([nextDueDate])
 }
 
+model Contract {
+  id                Int             @id @default(autoincrement())
+  customer          Customer        @relation(fields: [customerId], references: [id])
+  customerId        Int
+
+  contractType      ContractType
+  startDate         DateTime
+  endDate           DateTime
+  terms             String?
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([customerId])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([contractType])
+}
+
 model InventoryTransaction {
-  id           Int                      @id @default(autoincrement())
-  itemType     InventoryItemType
-  product      Product?                 @relation(fields: [productId], references: [id])
-  productId    Int?
-  sparePart    SparePart?               @relation(fields: [sparePartId], references: [id])
-  sparePartId  Int?
-  quantity     Int
-  kind         InventoryTransactionKind
-  note         String?
-  createdAt    DateTime                 @default(now())
+  id                Int                      @id @default(autoincrement())
+  itemType          InventoryItemType
+  product           Product?                 @relation(fields: [productId], references: [id])
+  productId         Int?
+  sparePart         SparePart?               @relation(fields: [sparePartId], references: [id])
+  sparePartId       Int?
+  quantity          Int
+  transactionKind   InventoryTransactionKind
+  notes             String?
+  unitPrice         Int?
+  totalAmount       Int?
+  transactionDate   DateTime                 @default(now())
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @default(now())
 
   @@index([productId])
   @@index([sparePartId])
   @@index([createdAt])
+  @@index([transactionDate])
 }
 
 model Notification {
@@ -305,9 +360,12 @@ model Notification {
   message      String
   status       NotificationStatus   @default(QUEUED)
   sentAt       DateTime?
+  scheduledAt  DateTime?
   createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @default(now())
 
   @@index([customerId])
   @@index([serviceJobId])
   @@index([status])
+  @@index([scheduledAt])
 }

@@ -24,9 +24,13 @@ export default function EditProductPage() {
           category: data.category ?? '',
           sku: data.sku ?? '',
           description: data.description ?? '',
-          price: data.price ?? '',
-          warrantyMonths: data.warrantyMonths ?? 12,
-          stockQuantity: data.stockQuantity ?? 0,
+          unitPrice: data.unitPrice ?? '',
+          costPrice: data.costPrice ?? '',
+          currentStock: data.currentStock ?? 0,
+          reorderLevel: data.reorderLevel ?? 5,
+          manufacturer: data.manufacturer ?? '',
+          model: data.model ?? '',
+          warrantyPeriod: data.warrantyPeriod ?? 12,
           isActive: data.isActive ?? true,
         });
       } catch (e) {
@@ -53,9 +57,11 @@ export default function EditProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          price: formData.price ? parseInt(String(formData.price), 10) : null,
-          warrantyMonths: Number(formData.warrantyMonths),
-          stockQuantity: Number(formData.stockQuantity),
+          unitPrice: formData.unitPrice ? parseInt(String(formData.unitPrice), 10) : null,
+          costPrice: formData.costPrice ? parseInt(String(formData.costPrice), 10) : null,
+          currentStock: Number(formData.currentStock),
+          reorderLevel: Number(formData.reorderLevel),
+          warrantyPeriod: Number(formData.warrantyPeriod),
         }),
       });
       if (!res.ok) throw new Error('Failed to update product');
@@ -105,16 +111,32 @@ export default function EditProductPage() {
               <input name="sku" value={formData.sku} onChange={handleChange} required className="input-field" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
-              <input type="number" name="price" value={formData.price as any} onChange={handleChange} className="input-field" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+              <input type="number" name="unitPrice" value={formData.unitPrice as any} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Cost Price</label>
+              <input type="number" name="costPrice" value={formData.costPrice as any} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
+              <input type="number" name="currentStock" value={formData.currentStock as any} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reorder Level</label>
+              <input type="number" name="reorderLevel" value={formData.reorderLevel as any} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Manufacturer</label>
+              <input name="manufacturer" value={formData.manufacturer} onChange={handleChange} className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+              <input name="model" value={formData.model} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Warranty (months)</label>
-              <input type="number" name="warrantyMonths" value={formData.warrantyMonths as any} onChange={handleChange} className="input-field" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-              <input type="number" name="stockQuantity" value={formData.stockQuantity as any} onChange={handleChange} className="input-field" />
+              <input type="number" name="warrantyPeriod" value={formData.warrantyPeriod as any} onChange={handleChange} className="input-field" />
             </div>
             <div className="flex items-center space-x-2">
               <input id="isActive" type="checkbox" name="isActive" checked={!!formData.isActive} onChange={handleChange} />

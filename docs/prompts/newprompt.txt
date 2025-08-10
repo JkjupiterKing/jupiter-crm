@@ -1,0 +1,57 @@
+# Task: Comprehensive Review and Optimization of UI, APIs, and Schema
+
+## Context
+We have a web application (React/Next.js + SQLite3 + Prisma ORM) with inconsistencies between:
+- **UI data rendering** (displaying incorrect or mismatched data)
+- **API endpoints** (fetching or processing incorrect data)
+- **Database schema** (not aligned with UI and API needs)
+- **Mock data** (outdated compared to the schema)
+
+## Objective
+Perform a **comprehensive audit** and **refactoring** of the project so that the **UI, APIs, Schema, and Mock Data are perfectly aligned**.
+
+## Steps to Perform
+1. **UI Functionality Review**
+   - Go through all UI components/screens.
+   - Identify mismatches or missing data fields between UI and API responses.
+   - Ensure UI props and state variables match the intended schema.
+
+2. **API Endpoints Review**
+   - Review all API endpoints (`/pages/api` or `src/pages/api`).
+   - Compare API request/response structures with the UI requirements.
+   - Identify redundant endpoints and merge or remove them.
+   - Ensure API logic is optimized and free from unnecessary DB calls.
+
+3. **Database Schema Audit**
+   - Review the current Prisma schema (`schema.prisma`).
+   - Identify unused models/fields.
+   - Add or rename fields to match UI needs.
+   - Ensure relationships between tables are correct.
+
+4. **Schema & API Alignment**
+   - Modify Prisma schema so it aligns with the data UI needs.
+   - Update all Prisma queries/mutations inside APIs to reflect schema changes.
+   - Run migrations after changes.
+
+5. **Mock Data Update**
+   - Update mock data files to reflect the new schema changes.
+   - Ensure all mock datasets match the new field names and relationships.
+   - Validate mock data with Prisma's seed functionality if applicable.
+
+6. **Cleanup**
+   - Delete unused or outdated files in the `scripts/` folder.
+   - Remove orphaned utility/helper files that are no longer imported anywhere.
+   - Run a code cleanup to remove unused imports and variables.
+
+7. **Testing**
+   - Test UI in both **normal mode** (real DB) and **mock-data mode** (mock DB).
+   - Verify all screens load without errors and data matches expectations.
+   - Ensure no broken API calls or schema mismatch errors.
+
+## Deliverables
+- Updated **UI code** with consistent data rendering.
+- Updated **API code** aligned with UI.
+- Updated **Prisma schema** reflecting final design.
+- Updated **mock data** aligned with schema.
+- Cleaned-up project directory.
+- All tests passing.

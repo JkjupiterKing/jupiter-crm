@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
       pendingServices,
       serviceDue30Days,
       overdueServices,
+      completedServicesThisMonth,
     ] = await Promise.all([
       prisma.customer.count(),
       prisma.product.count(),
@@ -35,6 +36,14 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+      prisma.serviceJob.count({
+        where: {
+          status: 'COMPLETED',
+          scheduledDate: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Start of current month
+          },
+        },
+      }),
     ]);
 
     // Get recent activities
@@ -44,7 +53,7 @@ export async function GET(request: NextRequest) {
         customer: true,
       },
       orderBy: {
-        date: 'desc',
+        saleDate: 'desc',
       },
     });
 
@@ -62,14 +71,14 @@ export async function GET(request: NextRequest) {
     // Get low stock products
     const lowStockProducts = await prisma.product.findMany({
       where: {
-        stockQuantity: {
+        currentStock: {
           lt: 10,
         },
         isActive: true,
       },
       take: 5,
       orderBy: {
-        stockQuantity: 'asc',
+        currentStock: 'asc',
       },
     });
 
@@ -102,6 +111,7 @@ export async function GET(request: NextRequest) {
         pendingServices,
         serviceDue30Days,
         overdueServices,
+        completedServicesThisMonth,
       },
       recentSales,
       recentServices,

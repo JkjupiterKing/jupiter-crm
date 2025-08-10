@@ -57,36 +57,90 @@ A comprehensive Customer Relationship Management system designed specifically fo
 
 ## Installation
 
-1. **Clone the repository**
+1. **Clone the repository**  
    ```bash
    git clone <repository-url>
    cd pratham-enterprises
    ```
 
-2. **Install dependencies**
+2. **Install dependencies**  
    ```bash
    npm install
    ```
 
-3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
+3. **Set up environment variables**  
+   Create a `.env.local` file in the root directory:  
    ```env
-   DATABASE_URL="file:./dev.db"
+   DATABASE_URL="file:./prisma/database.db"
    ```
 
-4. **Set up the database**
+4. **Set up the database**  
    ```bash
    npx prisma generate
    npx prisma db push
    ```
 
-5. **Run the development server**
+5. **Run the development server**  
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+6. **Open your browser**  
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Mock Mode
+
+The application supports a **mock mode** for development and testing purposes. This mode uses a separate database with pre-populated test data.
+
+### Starting in Mock Mode
+
+```bash
+# Start development server with mock data
+npm run dev:mock
+
+# Or manually set environment variable
+MOCK_MODE=true npm run dev
+```
+
+### Mock Mode Features
+
+- **Separate Database**: Uses `./prisma/mock.db` instead of the main database
+- **Pre-populated Data**: Automatically loads comprehensive test data including:
+  - 8 customers with diverse profiles
+  - 8 products across different categories
+  - 8 spare parts for maintenance
+  - 10 sales transactions
+  - 17 service jobs (completed and planned)
+  - Service contracts and AMC agreements
+  - Inventory transactions and stock levels
+  - Notification records
+
+### Mock Data Management
+
+```bash
+# Generate mock database schema
+npm run db:mock
+
+# Seed mock database with test data
+npm run db:seed
+
+# Reset mock database (deletes and recreates)
+rm prisma/mock.db && npm run dev:mock
+```
+
+### Mock Mode Benefits
+
+- **Safe Testing**: No risk of affecting production data
+- **Consistent Data**: Same test data every time
+- **Fast Setup**: Automatic database initialization
+- **Development**: Perfect for UI development and testing
+- **Demo**: Ready-to-use demo with realistic data
+
+### Switching Between Modes
+
+- **Normal Mode**: `npm run dev` (uses main database)
+- **Mock Mode**: `npm run dev:mock` (uses mock database)
+- **Production**: `npm run build && npm start` (uses main database)
 
 ## Database Schema
 

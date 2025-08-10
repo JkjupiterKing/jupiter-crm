@@ -33,8 +33,12 @@ export async function POST(request: NextRequest) {
         productId: body.productId ?? null,
         sparePartId: body.sparePartId ?? null,
         quantity: body.quantity,
-        kind: body.kind,
+        transactionKind: body.transactionKind || body.kind,
         note: body.note,
+        notes: body.notes || body.note,
+        unitPrice: body.unitPrice,
+        totalAmount: body.totalAmount,
+        transactionDate: body.transactionDate ? new Date(body.transactionDate) : new Date(),
       },
     });
 
@@ -42,14 +46,14 @@ export async function POST(request: NextRequest) {
     if (body.itemType === 'PRODUCT' && body.productId) {
       const product = await prisma.product.findUnique({ where: { id: body.productId } });
       if (product) {
-        const newQty = product.stockQuantity + (body.kind === 'RETURN' || body.kind === 'PURCHASE' || body.kind === 'ADJUSTMENT' ? body.quantity : -body.quantity);
-        await prisma.product.update({ where: { id: body.productId }, data: { stockQuantity: newQty } });
+        const newQty = product.currentStock + (body.transactionKind === 'RETURN' || body.transactionKind === 'PURCHASE' || body.transactionKind === 'ADJUSTMENT' ? body.quantity : -body.quantity);
+        await prisma.product.update({ where: { id: body.productId }, data: { currentStock: newQty } });
       }
     }
     if (body.itemType === 'SPARE_PART' && body.sparePartId) {
       const part = await prisma.sparePart.findUnique({ where: { id: body.sparePartId } });
       if (part) {
-        const newQty = part.stockQuantity + (body.kind === 'RETURN' || body.kind === 'PURCHASE' || body.kind === 'ADJUSTMENT' ? body.quantity : -body.quantity);
+        const newQty = part.stockQuantity + (body.transactionKind === 'RETURN' || body.transactionKind === 'PURCHASE' || body.transactionKind === 'ADJUSTMENT' ? body.quantity : -body.quantity);
         await prisma.sparePart.update({ where: { id: body.sparePartId }, data: { stockQuantity: newQty } });
       }
     }

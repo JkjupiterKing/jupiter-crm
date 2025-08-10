@@ -1,0 +1,39 @@
+i am running a small Water purifiers Sales and Service Company. I need a web application with below functionality. Suggest  me technology stack - Only admin uses the application. I want very basic and simple app with features. Only admin will access the application, customers or engineers will not access the application. Initially i want to run in local laptop. In future should be able to modify easily modify to host in cloud service.
+
+
+1) Products.
+ - Add/Remove/Maintain Product Details
+ - Add/Remove/Maintain Spare parts Details
+ - Inventory count
+
+2) Customer Details 
+ - Add/Remove/Maintain Customer
+ - Search By, 
+	Name
+	Door number
+	Mobile number
+	Area/Layout
+	PIN Code
+	District
+	Product
+	Out of warranty.
+	In contract 
+	In warranty.
+
+3) Sales/Service
+  - Products sold Bills
+  - Service Bills
+	- Service details
+	- Spare replace Replacement
+	- In warranty/On Contract/Out of Warranty
+
+4) Admin Features
+	- Service Due Dashboard: 
+	 - Service Due in next 30 days, 
+	 - Service Overdue list
+	- Sending Service Notifications SMS/WhatsApp Message to customers	
+	- Engineers visit Dashboard
+		- Engineer Visits planned for today
+		- Engineers Visits Planned for next 7 days 
+
+	- Reports: Inventory, Sales, Service, Customers, Engineers

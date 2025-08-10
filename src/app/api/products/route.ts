@@ -13,31 +13,50 @@ export async function GET(request: NextRequest) {
       whereClause.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    if (filterBy === 'active') {
-      whereClause.isActive = true;
-    } else if (filterBy === 'inactive') {
-      whereClause.isActive = false;
-    } else if (filterBy === 'low-stock') {
-      whereClause.stockQuantity = {
-        lt: 10,
-      };
+    if (filterBy === 'in_stock') {
+      whereClause.currentStock = { gt: 0 };
+    } else if (filterBy === 'low_stock') {
+      whereClause.currentStock = { lte: 10 };
+    } else if (filterBy === 'out_of_stock') {
+      whereClause.currentStock = 0;
     }
 
     const products = await prisma.product.findMany({
       where: whereClause,
       include: {
-        spareParts: true,
+        _count: {
+          select: {
+            inventoryTransactions: true,
+          },
+        },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json(products);
+    const transformedProducts = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      category: product.category,
+      currentStock: product.currentStock,
+      reorderLevel: product.reorderLevel,
+      unitPrice: product.unitPrice,
+      costPrice: product.costPrice,
+      description: product.description,
+      manufacturer: product.manufacturer,
+      model: product.model,
+      warrantyPeriod: product.warrantyPeriod,
+      isActive: product.isActive,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      transactionCount: product._count.inventoryTransactions,
+    }));
+
+    return NextResponse.json(transformedProducts);
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
@@ -51,16 +70,55 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    const {
+      name,
+      sku,
+      category,
+      currentStock,
+      reorderLevel,
+      unitPrice,
+      costPrice,
+      description,
+      manufacturer,
+      model,
+      warrantyPeriod,
+      isActive = true,
+    } = body;
+
+    // Validate required fields
+    if (!name || !sku || !category) {
+      return NextResponse.json(
+        { error: 'Name, SKU, and category are required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if SKU already exists
+    const existingProduct = await prisma.product.findFirst({
+      where: { sku },
+    });
+
+    if (existingProduct) {
+      return NextResponse.json(
+        { error: 'SKU already exists' },
+        { status: 400 }
+      );
+    }
+
     const product = await prisma.product.create({
       data: {
-        name: body.name,
-        category: body.category,
-        sku: body.sku,
-        description: body.description,
-        price: body.price ? parseInt(body.price) : null,
-        warrantyMonths: body.warrantyMonths || 12,
-        stockQuantity: body.stockQuantity || 0,
-        isActive: body.isActive !== false,
+        name,
+        sku,
+        category,
+        currentStock: currentStock || 0,
+        reorderLevel: reorderLevel || 0,
+        unitPrice: unitPrice || 0,
+        costPrice: costPrice || 0,
+        description: description || '',
+        manufacturer: manufacturer || '',
+        model: model || '',
+        warrantyPeriod: warrantyPeriod || 0,
+        isActive,
       },
     });
 

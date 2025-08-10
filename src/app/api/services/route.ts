@@ -38,6 +38,21 @@ export async function GET(request: NextRequest) {
         { scheduledDate: { lt: today } },
         { status: 'PLANNED' },
       ];
+    } else if (filterBy === 'due_30_days') {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      whereClause.AND = [
+        { scheduledDate: { gte: today, lte: thirtyDaysFromNow } },
+        { status: 'PLANNED' },
+      ];
+    } else if (filterBy === 'completed_month') {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      whereClause.AND = [
+        { scheduledDate: { gte: startOfMonth } },
+        { status: 'COMPLETED' },
+      ];
     }
 
     const services = await prisma.serviceJob.findMany({

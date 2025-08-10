@@ -10,23 +10,26 @@ export default function NewCustomerPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
-    doorNumber: '',
+    companyName: '',
+    address: '',
     street: '',
-    area: '',
-    layout: '',
-    district: '',
-    pinCode: '',
+    city: '',
+    state: '',
+    pincode: '',
     mobile: '',
     altMobile: '',
     email: '',
+    isVIP: false,
+    isActive: true,
     notes: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -94,23 +97,38 @@ export default function NewCustomerPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
+                Company Name
+              </label>
+              <input
+                type="text"
+                id="companyName"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Company name (optional)"
+              />
+            </div>
+
             {/* Address Information */}
             <div className="md:col-span-2">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
             </div>
 
             <div>
-              <label htmlFor="doorNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Door Number
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                Address
               </label>
               <input
                 type="text"
-                id="doorNumber"
-                name="doorNumber"
-                value={formData.doorNumber}
+                id="address"
+                name="address"
+                value={formData.address}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="Door/Flat number"
+                placeholder="House/Flat number"
               />
             </div>
 
@@ -130,59 +148,44 @@ export default function NewCustomerPage() {
             </div>
 
             <div>
-              <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-2">
-                Area
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                City
               </label>
               <input
                 type="text"
-                id="area"
-                name="area"
-                value={formData.area}
+                id="city"
+                name="city"
+                value={formData.city}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="Area/Locality"
+                placeholder="City"
               />
             </div>
 
             <div>
-              <label htmlFor="layout" className="block text-sm font-medium text-gray-700 mb-2">
-                Layout
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                State
               </label>
               <input
                 type="text"
-                id="layout"
-                name="layout"
-                value={formData.layout}
+                id="state"
+                name="state"
+                value={formData.state}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="Layout/Colony"
+                placeholder="State"
               />
             </div>
 
             <div>
-              <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
-                District
-              </label>
-              <input
-                type="text"
-                id="district"
-                name="district"
-                value={formData.district}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="District"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="pinCode" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="pincode" className="block text-sm font-medium text-gray-700 mb-2">
                 PIN Code
               </label>
               <input
                 type="text"
-                id="pinCode"
-                name="pinCode"
-                value={formData.pinCode}
+                id="pincode"
+                name="pincode"
+                value={formData.pincode}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="PIN Code"
@@ -238,6 +241,37 @@ export default function NewCustomerPage() {
                 className="input-field"
                 placeholder="Email address"
               />
+            </div>
+
+            {/* Customer Status */}
+            <div className="md:col-span-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Status</h3>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isVIP"
+                  checked={formData.isVIP}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">VIP Customer</span>
+              </label>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">Active Customer</span>
+              </label>
             </div>
 
             {/* Additional Information */}

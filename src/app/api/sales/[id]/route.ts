@@ -35,8 +35,8 @@ export async function PATCH(
       data: {
         customerId: body.customerId,
         invoiceNumber: body.invoiceNumber,
-        date: body.date ? new Date(body.date) : undefined,
-        total: body.total,
+        saleDate: body.saleDate ? new Date(body.saleDate) : undefined,
+        totalAmount: body.totalAmount,
         paymentMode: body.paymentMode,
         notes: body.notes,
         // Items patching (simple approach: delete and recreate if provided)

@@ -21,15 +21,17 @@ export default function EditCustomerPage() {
         const data = await res.json();
         setFormData({
           fullName: data.fullName ?? '',
-          doorNumber: data.doorNumber ?? '',
+          address: data.address ?? '',
           street: data.street ?? '',
-          area: data.area ?? '',
-          layout: data.layout ?? '',
-          district: data.district ?? '',
-          pinCode: data.pinCode ?? '',
+          city: data.city ?? '',
+          state: data.state ?? '',
+          pincode: data.pincode ?? '',
           mobile: data.mobile ?? '',
           altMobile: data.altMobile ?? '',
           email: data.email ?? '',
+          companyName: data.companyName ?? '',
+          isVIP: data.isVIP ?? false,
+          isActive: data.isActive ?? true,
           notes: data.notes ?? '',
         });
       } catch (e) {
@@ -43,8 +45,12 @@ export default function EditCustomerPage() {
   }, [params.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev: any) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,28 +101,28 @@ export default function EditCustomerPage() {
               <input className="input-field" name="fullName" value={formData.fullName} onChange={handleChange} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Door Number</label>
-              <input className="input-field" name="doorNumber" value={formData.doorNumber} onChange={handleChange} />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+              <input className="input-field" name="companyName" value={formData.companyName} onChange={handleChange} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <input className="input-field" name="address" value={formData.address} onChange={handleChange} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Street</label>
               <input className="input-field" name="street" value={formData.street} onChange={handleChange} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Area</label>
-              <input className="input-field" name="area" value={formData.area} onChange={handleChange} />
+              <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+              <input className="input-field" name="city" value={formData.city} onChange={handleChange} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
-              <input className="input-field" name="layout" value={formData.layout} onChange={handleChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
-              <input className="input-field" name="district" value={formData.district} onChange={handleChange} />
+              <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+              <input className="input-field" name="state" value={formData.state} onChange={handleChange} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">PIN Code</label>
-              <input className="input-field" name="pinCode" value={formData.pinCode} onChange={handleChange} />
+              <input className="input-field" name="pincode" value={formData.pincode} onChange={handleChange} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Mobile *</label>
@@ -129,6 +135,30 @@ export default function EditCustomerPage() {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input className="input-field" name="email" value={formData.email} onChange={handleChange} />
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isVIP"
+                  checked={formData.isVIP}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">VIP Customer</span>
+              </label>
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">Active Customer</span>
+              </label>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>

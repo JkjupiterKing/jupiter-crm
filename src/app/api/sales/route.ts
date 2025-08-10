@@ -17,6 +17,14 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    if (filterBy === 'paid') {
+      whereClause.status = 'PAID';
+    } else if (filterBy === 'pending') {
+      whereClause.status = 'PENDING';
+    } else if (filterBy === 'cancelled') {
+      whereClause.status = 'CANCELLED';
+    }
+
     const sales = await prisma.sale.findMany({
       where: whereClause,
       include: {
@@ -29,7 +37,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        date: 'desc',
+        saleDate: 'desc',
       },
     });
 
@@ -51,9 +59,10 @@ export async function POST(request: NextRequest) {
       data: {
         customerId: body.customerId,
         invoiceNumber: body.invoiceNumber,
-        date: new Date(body.date),
-        total: body.total,
+        saleDate: new Date(body.saleDate),
+        totalAmount: body.totalAmount,
         paymentMode: body.paymentMode,
+        status: body.status || 'PAID',
         notes: body.notes,
         items: {
           create: body.items.map((item: any) => ({

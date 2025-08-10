@@ -9,9 +9,9 @@ interface ServiceJob {
   id: number;
   customerName: string;
   scheduledDate: string;
-  status: 'planned' | 'completed' | 'cancelled' | 'no_show';
-  jobType: 'installation' | 'repair' | 'service';
-  warrantyStatus: 'in_warranty' | 'in_contract' | 'out_of_warranty';
+  status: 'PLANNED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  jobType: 'INSTALLATION' | 'REPAIR' | 'SERVICE';
+  warrantyStatus: 'IN_WARRANTY' | 'IN_CONTRACT' | 'OUT_OF_WARRANTY';
   engineerName?: string;
   billedAmount?: number;
 }
@@ -58,9 +58,9 @@ export default function ServicesPage() {
             id: s.id,
             customerName: s.customer?.fullName ?? '—',
             scheduledDate: s.scheduledDate,
-            status: s.status.toLowerCase(),
-            jobType: s.jobType.toLowerCase(),
-            warrantyStatus: s.warrantyStatus.toLowerCase(),
+            status: s.status, // Keep original uppercase status
+            jobType: s.jobType, // Keep original uppercase jobType
+            warrantyStatus: s.warrantyStatus, // Keep original uppercase warrantyStatus
             engineerName: s.engineer?.name ?? undefined,
             billedAmount: s.billedAmount ?? undefined,
           }))
@@ -80,10 +80,10 @@ export default function ServicesPage() {
       service.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.engineerName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (filterBy === 'planned') return matchesSearch && service.status === 'planned';
-    if (filterBy === 'completed') return matchesSearch && service.status === 'completed';
-    if (filterBy === 'cancelled') return matchesSearch && service.status === 'cancelled';
-    if (filterBy === 'no_show') return matchesSearch && service.status === 'no_show';
+    if (filterBy === 'planned') return matchesSearch && service.status === 'PLANNED';
+    if (filterBy === 'completed') return matchesSearch && service.status === 'COMPLETED';
+    if (filterBy === 'cancelled') return matchesSearch && service.status === 'CANCELLED';
+    if (filterBy === 'no_show') return matchesSearch && service.status === 'NO_SHOW';
     if (filterBy === 'today') {
       const today = new Date().toISOString().split('T')[0];
       return matchesSearch && service.scheduledDate === today;
@@ -91,47 +91,40 @@ export default function ServicesPage() {
     if (filterBy === 'overdue') {
       const today = new Date();
       const scheduledDate = new Date(service.scheduledDate);
-      return matchesSearch && scheduledDate < today && service.status === 'planned';
+      return matchesSearch && scheduledDate < today && service.status === 'PLANNED';
     }
     if (filterBy === 'due_30_days') {
       const today = new Date();
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(today.getDate() + 30);
       const scheduledDate = new Date(service.scheduledDate);
-      return matchesSearch && scheduledDate >= today && scheduledDate <= thirtyDaysFromNow && service.status === 'planned';
+      return matchesSearch && scheduledDate >= today && scheduledDate <= thirtyDaysFromNow && service.status === 'PLANNED';
     }
-    if (filterBy === 'completed_month') {
-      const today = new Date();
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const scheduledDate = new Date(service.scheduledDate);
-      return matchesSearch && service.status === 'completed' && scheduledDate >= firstDayOfMonth;
-    }
-    
     return matchesSearch;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'planned':
+      case 'PLANNED':
         return { text: 'Planned', color: 'bg-blue-100 text-blue-800', icon: Clock };
-      case 'completed':
+      case 'COMPLETED':
         return { text: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle };
-      case 'cancelled':
+      case 'CANCELLED':
         return { text: 'Cancelled', color: 'bg-red-100 text-red-800', icon: AlertTriangle };
-      case 'no_show':
+      case 'NO_SHOW':
         return { text: 'No Show', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle };
       default:
-        return { text: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: Clock };
+        return { text: status, color: 'bg-gray-100 text-gray-800', icon: Clock };
     }
   };
 
   const getWarrantyBadge = (status: string) => {
     switch (status) {
-      case 'in_warranty':
+      case 'IN_WARRANTY':
         return 'bg-green-100 text-green-800';
-      case 'in_contract':
+      case 'IN_CONTRACT':
         return 'bg-blue-100 text-blue-800';
-      case 'out_of_warranty':
+      case 'OUT_OF_WARRANTY':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -140,23 +133,24 @@ export default function ServicesPage() {
 
   const getJobTypeIcon = (type: string) => {
     switch (type) {
-      case 'installation':
+      case 'INSTALLATION':
         return '🔧';
-      case 'repair':
+      case 'REPAIR':
         return '🔨';
-      case 'service':
-        return '⚙️';
+      case 'SERVICE':
+        return '🛠️';
       default:
         return '🔧';
     }
   };
 
-  const plannedServices = services.filter(s => s.status === 'planned').length;
-  const completedServices = services.filter(s => s.status === 'completed').length;
+  // Calculate metrics using correct uppercase status values
+  const plannedServices = services.filter(s => s.status === 'PLANNED').length;
+  const completedServices = services.filter(s => s.status === 'COMPLETED').length;
   const overdueServices = services.filter(s => {
     const today = new Date();
     const scheduledDate = new Date(s.scheduledDate);
-    return scheduledDate < today && s.status === 'planned';
+    return scheduledDate < today && s.status === 'PLANNED';
   }).length;
 
   return (
@@ -370,7 +364,7 @@ export default function ServicesPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
-                            {service.status === 'planned' && (
+                            {service.status === 'PLANNED' && (
                               <Link
                                 href={`/services/${service.id}/edit`}
                                 className="text-indigo-600 hover:text-indigo-900"
