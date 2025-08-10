@@ -21,9 +21,9 @@ interface DashboardStats {
   totalCustomers: number;
   totalProducts: number;
   totalSales: number;
-  pendingServices: number;
   serviceDue30Days: number;
   overdueServices: number;
+  completedThisMonth: number;
 }
 
 export default function Dashboard() {
@@ -31,26 +31,51 @@ export default function Dashboard() {
     totalCustomers: 0,
     totalProducts: 0,
     totalSales: 0,
-    pendingServices: 0,
     serviceDue30Days: 0,
-    overdueServices: 0
+    overdueServices: 0,
+    completedThisMonth: 0
   });
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {
-        const res = await fetch('/api/dashboard', { signal: controller.signal });
-        if (!res.ok) throw new Error('Failed to load dashboard');
-        const data = await res.json();
-        setStats({
-          totalCustomers: data.stats.totalCustomers,
-          totalProducts: data.stats.totalProducts,
-          totalSales: data.stats.totalSales,
-          pendingServices: data.stats.pendingServices,
-          serviceDue30Days: data.stats.serviceDue30Days,
-          overdueServices: data.stats.overdueServices,
-        });
+        const [
+          dashboardRes,
+          overdueRes,
+          due30DaysRes,
+          completedMonthRes,
+        ] = await Promise.all([
+          fetch('/api/dashboard', { signal: controller.signal }),
+          fetch('/api/services?filterBy=overdue', { signal: controller.signal }),
+          fetch('/api/services?filterBy=due_30_days', { signal: controller.signal }),
+          fetch('/api/services?filterBy=completed_month', { signal: controller.signal }),
+        ]);
+
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json();
+          setStats(prev => ({
+            ...prev,
+            totalCustomers: data.stats.totalCustomers,
+            totalProducts: data.stats.totalProducts,
+            totalSales: data.stats.totalSales,
+          }));
+        }
+
+        if (overdueRes.ok) {
+          const data = await overdueRes.json();
+          setStats(prev => ({ ...prev, overdueServices: data.length }));
+        }
+
+        if (due30DaysRes.ok) {
+          const data = await due30DaysRes.json();
+          setStats(prev => ({ ...prev, serviceDue30Days: data.length }));
+        }
+
+        if (completedMonthRes.ok) {
+          const data = await completedMonthRes.json();
+          setStats(prev => ({ ...prev, completedThisMonth: data.length }));
+        }
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
       }
@@ -116,7 +141,7 @@ export default function Dashboard() {
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       href: '/services?filter=completed_month',
-  count: 0 // TODO: Replace with real value if available from API
+      count: stats.completedThisMonth
     }
   ];
 
@@ -211,15 +236,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center p-1.5 bg-orange-50 rounded-md">
-                  <div className="p-1 rounded-full bg-orange-100">
-                    <Wrench className="w-4 h-4 text-orange-600" />
-                  </div>
-                  <div className="ml-2">
-                    <p className="text-xs font-medium text-gray-600">Pending Services</p>
-                    <p className="text-base font-bold text-gray-900">{stats.pendingServices}</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

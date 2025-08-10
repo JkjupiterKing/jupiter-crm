@@ -69,6 +69,13 @@ enum SaleStatus {
   CANCELLED
 }
 
+enum ServiceFrequency {
+  NONE
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+}
+
 model Product {
   id               Int                  @id @default(autoincrement())
   name             String
@@ -83,6 +90,7 @@ model Product {
   manufacturer     String?
   model            String?
   warrantyPeriod   Int                  @default(12)
+  service_frequency ServiceFrequency    @default(NONE)
   // Product status
   isActive         Boolean              @default(true)
   createdAt        DateTime             @default(now())
@@ -211,6 +219,7 @@ model Sale {
   updatedAt     DateTime  @updatedAt
 
   items         SaleItem[]
+  serviceJobs   ServiceJob[]
 
   @@index([customerId])
   @@index([saleDate])
@@ -246,6 +255,9 @@ model ServiceJob {
 
   customerProduct    CustomerProduct?  @relation(fields: [customerProductId], references: [id])
   customerProductId  Int?
+
+  saleId             Int?
+  sale               Sale?             @relation(fields: [saleId], references: [id])
 
   scheduledDate      DateTime
   status             ServiceStatus     @default(PLANNED)

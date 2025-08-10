@@ -42,6 +42,7 @@ export async function PATCH(
         model: body.model,
         warrantyPeriod: typeof body.warrantyPeriod === 'number' ? body.warrantyPeriod : body.warrantyPeriod ? parseInt(body.warrantyPeriod) : 12,
         isActive: body.isActive,
+        service_frequency: body.service_frequency,
       },
     });
     return NextResponse.json(product);

@@ -14,6 +14,7 @@ interface ServiceJob {
   warrantyStatus: 'IN_WARRANTY' | 'IN_CONTRACT' | 'OUT_OF_WARRANTY';
   engineerName?: string;
   billedAmount?: number;
+  saleId?: number;
 }
 
 export default function ServicesPage() {
@@ -63,6 +64,7 @@ export default function ServicesPage() {
             warrantyStatus: s.warrantyStatus, // Keep original uppercase warrantyStatus
             engineerName: s.engineer?.name ?? undefined,
             billedAmount: s.billedAmount ?? undefined,
+            saleId: s.saleId ?? undefined,
           }))
         );
       } catch (e) {
@@ -303,6 +305,9 @@ export default function ServicesPage() {
                       Engineer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sale ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -343,6 +348,17 @@ export default function ServicesPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {service.engineerName || 'Not assigned'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {service.saleId ? (
+                              <Link href={`/sales/${service.saleId}`} className="text-blue-600 hover:underline">
+                                {service.saleId}
+                              </Link>
+                            ) : (
+                              'N/A'
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

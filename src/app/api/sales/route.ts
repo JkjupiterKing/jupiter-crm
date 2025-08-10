@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { add } from 'date-fns';
+
+function getServiceDates(frequency: string, saleDate: Date): Date[] {
+  const dates: Date[] = [];
+  const normalizedFrequency = frequency.toUpperCase();
+
+  if (normalizedFrequency === 'QUARTERLY') {
+    for (let i = 1; i <= 4; i++) {
+      dates.push(add(saleDate, { months: i * 3 }));
+    }
+  } else if (normalizedFrequency === 'HALF_YEARLY') {
+    for (let i = 1; i <= 2; i++) {
+      dates.push(add(saleDate, { months: i * 6 }));
+    }
+  } else if (normalizedFrequency === 'YEARLY') {
+    dates.push(add(saleDate, { years: 1 }));
+  }
+
+  return dates;
+}
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,6 +106,27 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Auto-create services based on product frequency
+    for (const item of sale.items) {
+      if (item.itemType === 'PRODUCT' && item.product && item.product.service_frequency && item.product.service_frequency !== 'NONE') {
+        const serviceDates = getServiceDates(item.product.service_frequency, sale.saleDate);
+
+        for (const date of serviceDates) {
+          await prisma.serviceJob.create({
+            data: {
+              customerId: sale.customerId,
+              saleId: sale.id,
+              scheduledDate: date,
+              status: 'PLANNED',
+              jobType: 'SERVICE',
+              warrantyStatus: 'IN_WARRANTY', // Default or from product
+              problemDescription: `Preventive maintenance for ${item.product.name}`,
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json(sale, { status: 201 });
   } catch (error) {
