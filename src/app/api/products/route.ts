@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       include: {
         _count: {
           select: {
-            inventoryTransactions: true,
+            inventoryTxns: true,
           },
         },
       },
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       isActive: product.isActive,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
-      transactionCount: product._count.inventoryTransactions,
+      transactionCount: product._count.inventoryTxns,
     }));
 
     return NextResponse.json(transformedProducts);
