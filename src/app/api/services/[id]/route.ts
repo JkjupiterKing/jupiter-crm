@@ -36,8 +36,9 @@ export async function PATCH(
       data: {
         customerId: body.customerId,
         customerProductId: body.customerProductId,
-        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : undefined,
-        status: body.status,
+        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+        serviceDueDate: body.serviceDueDate ? new Date(body.serviceDueDate) : undefined,
+        status: body.scheduledDate ? body.status : 'UNSCHEDULED',
         jobType: body.jobType,
         warrantyStatus: body.warrantyStatus,
         engineerId: body.engineerId,

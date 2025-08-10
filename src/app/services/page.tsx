@@ -8,8 +8,9 @@ import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle 
 interface ServiceJob {
   id: number;
   customerName: string;
-  scheduledDate: string;
-  status: 'PLANNED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  scheduledDate?: string;
+  serviceDueDate: string;
+  status: 'PLANNED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'UNSCHEDULED';
   jobType: 'INSTALLATION' | 'REPAIR' | 'SERVICE';
   warrantyStatus: 'IN_WARRANTY' | 'IN_CONTRACT' | 'OUT_OF_WARRANTY';
   engineerName?: string;
@@ -45,6 +46,7 @@ export default function ServicesPage() {
           completed: 'completed',
           cancelled: 'cancelled',
           no_show: 'no_show',
+          unscheduled: 'unscheduled',
           today: 'today',
           overdue: 'overdue',
         };
@@ -59,6 +61,7 @@ export default function ServicesPage() {
             id: s.id,
             customerName: s.customer?.fullName ?? '—',
             scheduledDate: s.scheduledDate,
+            serviceDueDate: s.serviceDueDate,
             status: s.status, // Keep original uppercase status
             jobType: s.jobType, // Keep original uppercase jobType
             warrantyStatus: s.warrantyStatus, // Keep original uppercase warrantyStatus
@@ -86,21 +89,22 @@ export default function ServicesPage() {
     if (filterBy === 'completed') return matchesSearch && service.status === 'COMPLETED';
     if (filterBy === 'cancelled') return matchesSearch && service.status === 'CANCELLED';
     if (filterBy === 'no_show') return matchesSearch && service.status === 'NO_SHOW';
+    if (filterBy === 'unscheduled') return matchesSearch && service.status === 'UNSCHEDULED';
     if (filterBy === 'today') {
       const today = new Date().toISOString().split('T')[0];
-      return matchesSearch && service.scheduledDate === today;
+      return matchesSearch && service.scheduledDate?.split('T')[0] === today;
     }
     if (filterBy === 'overdue') {
       const today = new Date();
-      const scheduledDate = new Date(service.scheduledDate);
-      return matchesSearch && scheduledDate < today && service.status === 'PLANNED';
+      const serviceDueDate = new Date(service.serviceDueDate);
+      return matchesSearch && serviceDueDate < today && (service.status === 'PLANNED' || service.status === 'UNSCHEDULED');
     }
     if (filterBy === 'due_30_days') {
       const today = new Date();
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(today.getDate() + 30);
-      const scheduledDate = new Date(service.scheduledDate);
-      return matchesSearch && scheduledDate >= today && scheduledDate <= thirtyDaysFromNow && service.status === 'PLANNED';
+      const serviceDueDate = new Date(service.serviceDueDate);
+      return matchesSearch && serviceDueDate >= today && serviceDueDate <= thirtyDaysFromNow && (service.status === 'PLANNED' || service.status === 'UNSCHEDULED');
     }
     return matchesSearch;
   });
@@ -115,6 +119,8 @@ export default function ServicesPage() {
         return { text: 'Cancelled', color: 'bg-red-100 text-red-800', icon: AlertTriangle };
       case 'NO_SHOW':
         return { text: 'No Show', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle };
+      case 'UNSCHEDULED':
+        return { text: 'Unscheduled', color: 'bg-gray-100 text-gray-800', icon: Calendar };
       default:
         return { text: status, color: 'bg-gray-100 text-gray-800', icon: Clock };
     }
@@ -151,8 +157,8 @@ export default function ServicesPage() {
   const completedServices = services.filter(s => s.status === 'COMPLETED').length;
   const overdueServices = services.filter(s => {
     const today = new Date();
-    const scheduledDate = new Date(s.scheduledDate);
-    return scheduledDate < today && s.status === 'PLANNED';
+    const serviceDueDate = new Date(s.serviceDueDate);
+    return serviceDueDate < today && (s.status === 'PLANNED' || s.status === 'UNSCHEDULED');
   }).length;
 
   return (
@@ -302,6 +308,9 @@ export default function ServicesPage() {
                       Scheduled Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Service Due Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Engineer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -342,7 +351,12 @@ export default function ServicesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(service.scheduledDate).toLocaleDateString()}
+                            {service.scheduledDate ? new Date(service.scheduledDate).toLocaleDateString() : 'Not Scheduled'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {new Date(service.serviceDueDate).toLocaleDateString()}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -380,7 +394,7 @@ export default function ServicesPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
-                            {service.status === 'PLANNED' && (
+                            {(service.status === 'PLANNED' || service.status === 'UNSCHEDULED') && (
                               <Link
                                 href={`/services/${service.id}/edit`}
                                 className="text-indigo-600 hover:text-indigo-900"

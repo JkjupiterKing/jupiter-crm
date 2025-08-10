@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
       whereClause.status = 'CANCELLED';
     } else if (filterBy === 'no_show') {
       whereClause.status = 'NO_SHOW';
+    } else if (filterBy === 'unscheduled') {
+      whereClause.status = 'UNSCHEDULED';
     } else if (filterBy === 'today') {
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -35,16 +37,16 @@ export async function GET(request: NextRequest) {
     } else if (filterBy === 'overdue') {
       const today = new Date();
       whereClause.AND = [
-        { scheduledDate: { lt: today } },
-        { status: 'PLANNED' },
+        { serviceDueDate: { lt: today } },
+        { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
       ];
     } else if (filterBy === 'due_30_days') {
       const today = new Date();
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(today.getDate() + 30);
       whereClause.AND = [
-        { scheduledDate: { gte: today, lte: thirtyDaysFromNow } },
-        { status: 'PLANNED' },
+        { serviceDueDate: { gte: today, lte: thirtyDaysFromNow } },
+        { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
       ];
     } else if (filterBy === 'completed_month') {
       const today = new Date();
@@ -90,13 +92,52 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    let serviceDueDate;
+
+    if (body.saleId) {
+      const sale = await prisma.sale.findUnique({
+        where: { id: body.saleId },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      if (sale) {
+        const productItem = sale.items.find(item => item.product?.service_frequency && item.product.service_frequency !== 'NONE');
+        if (productItem && productItem.product) {
+          const frequency = productItem.product.service_frequency;
+          const saleDate = new Date(sale.saleDate);
+          if (frequency === 'QUARTERLY') {
+            serviceDueDate = new Date(saleDate.setMonth(saleDate.getMonth() + 3));
+          } else if (frequency === 'HALF_YEARLY') {
+            serviceDueDate = new Date(saleDate.setMonth(saleDate.getMonth() + 6));
+          } else if (frequency === 'YEARLY') {
+            serviceDueDate = new Date(saleDate.setFullYear(saleDate.getFullYear() + 1));
+          }
+        }
+      }
+    }
     
+    if (!serviceDueDate) {
+      if (body.serviceDueDate) {
+        serviceDueDate = new Date(body.serviceDueDate);
+      } else {
+        return NextResponse.json({ error: 'Service Due Date is required' }, { status: 400 });
+      }
+    }
+
     const service = await prisma.serviceJob.create({
       data: {
         customerId: body.customerId,
         customerProductId: body.customerProductId,
-        scheduledDate: new Date(body.scheduledDate),
-        status: body.status || 'PLANNED',
+        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+        serviceDueDate: serviceDueDate,
+        status: body.scheduledDate ? (body.status || 'PLANNED') : 'UNSCHEDULED',
         jobType: body.jobType,
         warrantyStatus: body.warrantyStatus,
         engineerId: body.engineerId,

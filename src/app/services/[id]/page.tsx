@@ -11,7 +11,8 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
       <h1 className="text-3xl font-bold mb-4">Service Details</h1>
       <div className="bg-white rounded shadow p-6">
         <div><b>ID:</b> {service.id}</div>
-        <div><b>Scheduled Date:</b> {service.scheduledDate.toLocaleString()}</div>
+        <div><b>Scheduled Date:</b> {service.scheduledDate ? service.scheduledDate.toLocaleString() : 'Not Scheduled'}</div>
+        <div><b>Service Due Date:</b> {service.serviceDueDate.toLocaleString()}</div>
         <div><b>Status:</b> {service.status}</div>
         <div><b>Job Type:</b> {service.jobType}</div>
         <div><b>Warranty Status:</b> {service.warrantyStatus}</div>
