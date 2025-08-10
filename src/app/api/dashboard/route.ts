@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get total counts
     const [
       totalCustomers,
       totalProducts,
       totalSales,
+      totalServiceRequests,
       pendingServices,
       serviceDue30Days,
       overdueServices,
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
       prisma.customer.count(),
       prisma.product.count(),
       prisma.sale.count(),
+      prisma.serviceJob.count(),
       prisma.serviceJob.count({
         where: { status: 'PLANNED' },
       }),
@@ -108,6 +110,7 @@ export async function GET(request: NextRequest) {
         totalCustomers,
         totalProducts,
         totalSales,
+        totalServiceRequests,
         pendingServices,
         serviceDue30Days,
         overdueServices,
