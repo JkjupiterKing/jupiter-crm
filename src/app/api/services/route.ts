@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
+import { ServiceVisitStatus } from '@prisma/client';
+
+enum ServiceDueStatus {
+  DUE = 'DUE',
+  OVERDUE = 'OVERDUE',
+}
+
+const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+  const dueDate = new Date(serviceDueDate);
+  dueDate.setHours(0, 0, 0, 0); // Normalize dueDate to the start of the day
+
+  if (dueDate < today) {
+    return ServiceDueStatus.OVERDUE;
+  }
+  return ServiceDueStatus.DUE;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,17 +28,13 @@ export async function GET(request: NextRequest) {
     const visitStatus = searchParams.get('visit_status');
     const filter = searchParams.get('filter');
 
-    const whereClause: { [key: string]: any } = {};
+    const whereClause: { [key: string]: unknown } = {};
 
     if (search) {
       whereClause.OR = [
         { customer: { fullName: { contains: search, mode: 'insensitive' } } },
         { engineer: { name: { contains: search, mode: 'insensitive' } } },
       ];
-    }
-
-    if (dueStatus && Object.values(ServiceDueStatus).includes(dueStatus as ServiceDueStatus)) {
-      whereClause.serviceDueStatus = dueStatus;
     }
 
     if (visitStatus && Object.values(ServiceVisitStatus).includes(visitStatus as ServiceVisitStatus)) {
@@ -60,7 +73,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(services);
+    const servicesWithStatus = services.map(service => {
+      let serviceDueStatus: ServiceDueStatus | null = null;
+      if (service.serviceVisitStatus !== ServiceVisitStatus.COMPLETED && service.serviceVisitStatus !== ServiceVisitStatus.CANCELLED) {
+        serviceDueStatus = getServiceDueStatus(service.serviceDueDate);
+      }
+      return { ...service, serviceDueStatus };
+    });
+
+    let filteredServices = servicesWithStatus;
+    if (dueStatus) {
+      filteredServices = servicesWithStatus.filter(
+        service => service.serviceDueStatus === dueStatus
+      );
+    }
+
+    return NextResponse.json(filteredServices);
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json(
@@ -120,22 +148,12 @@ export async function POST(request: NextRequest) {
       serviceVisitStatus = visitScheduledDate ? ServiceVisitStatus.PLANNED : ServiceVisitStatus.UNSCHEDULED;
     }
 
-    let serviceDueStatus: ServiceDueStatus | null = serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
-
-    if (
-      serviceVisitStatus === ServiceVisitStatus.COMPLETED ||
-      serviceVisitStatus === ServiceVisitStatus.CANCELLED
-    ) {
-      serviceDueStatus = null;
-    }
-
     const service = await prisma.serviceJob.create({
       data: {
         customerId: body.customerId,
         customerProductId: body.customerProductId,
         visitScheduledDate: visitScheduledDate,
         serviceDueDate: serviceDueDate,
-        serviceDueStatus: serviceDueStatus,
         serviceVisitStatus: serviceVisitStatus,
         jobType: body.jobType,
         warrantyStatus: body.warrantyStatus,
