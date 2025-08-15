@@ -49,6 +49,8 @@ export default function ServicesPage() {
           unscheduled: 'unscheduled',
           today: 'today',
           overdue: 'overdue',
+          due_30_days: 'due_30_days',
+          completed_month: 'completed_month',
         };
         if (filterBy in filterMap) params.set('filterBy', filterMap[filterBy]);
         const res = await fetch(`/api/services${params.toString() ? `?${params.toString()}` : ''}`, {
@@ -85,27 +87,7 @@ export default function ServicesPage() {
       service.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.engineerName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (filterBy === 'planned') return matchesSearch && service.status === 'PLANNED';
-    if (filterBy === 'completed') return matchesSearch && service.status === 'COMPLETED';
-    if (filterBy === 'cancelled') return matchesSearch && service.status === 'CANCELLED';
-    if (filterBy === 'no_show') return matchesSearch && service.status === 'NO_SHOW';
-    if (filterBy === 'unscheduled') return matchesSearch && service.status === 'UNSCHEDULED';
-    if (filterBy === 'today') {
-      const today = new Date().toISOString().split('T')[0];
-      return matchesSearch && service.scheduledDate?.split('T')[0] === today;
-    }
-    if (filterBy === 'overdue') {
-      const today = new Date();
-      const serviceDueDate = new Date(service.serviceDueDate);
-      return matchesSearch && serviceDueDate < today && (service.status === 'PLANNED' || service.status === 'UNSCHEDULED');
-    }
-    if (filterBy === 'due_30_days') {
-      const today = new Date();
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
-      const serviceDueDate = new Date(service.serviceDueDate);
-      return matchesSearch && serviceDueDate >= today && serviceDueDate <= thirtyDaysFromNow && (service.status === 'PLANNED' || service.status === 'UNSCHEDULED');
-    }
+    // All filtering except search is now done on the server
     return matchesSearch;
   });
 
