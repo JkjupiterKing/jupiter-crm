@@ -57,11 +57,15 @@ export default function ServicesPage() {
           params.set('search', searchTerm);
         }
         if (filter !== 'all') {
-          const [filterType, filterValue] = filter.split(':');
-          if (filterType === 'due_status') {
-            params.set('due_status', filterValue);
-          } else if (filterType === 'visit_status') {
-            params.set('visit_status', filterValue);
+          if (filter.includes(':')) {
+            const [filterType, filterValue] = filter.split(':');
+            if (filterType === 'due_status') {
+              params.set('due_status', filterValue);
+            } else if (filterType === 'visit_status') {
+              params.set('visit_status', filterValue);
+            }
+          } else {
+            params.set('filter', filter);
           }
         }
 
@@ -285,6 +289,7 @@ export default function ServicesPage() {
               >
                 <option value="all">All Services</option>
                 <optgroup label="By Due Status">
+                  <option value="due_in_30_days">Due in next 30 days</option>
                   <option value="due_status:DUE">Due</option>
                   <option value="due_status:OVERDUE">Overdue</option>
                 </optgroup>

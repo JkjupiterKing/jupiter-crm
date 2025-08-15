@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Clock,
   BarChart3,
-  Settings
+  Settings,
+  ShieldAlert
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -24,12 +25,24 @@ interface DashboardStats {
   totalServiceRequests: number;
 }
 
+interface AlertStats {
+  servicesDueInNext30Days: number;
+  servicesOverdue: number;
+  servicesPlanned: number;
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalCustomers: 0,
     totalProducts: 0,
     totalSales: 0,
     totalServiceRequests: 0,
+  });
+
+  const [alertStats, setAlertStats] = useState<AlertStats>({
+    servicesDueInNext30Days: 0,
+    servicesOverdue: 0,
+    servicesPlanned: 0,
   });
 
   useEffect(() => {
@@ -46,6 +59,23 @@ export default function Dashboard() {
       }
     }
     load();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadAlerts() {
+      try {
+        const res = await fetch('/api/dashboard/alerts', { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          setAlertStats(data);
+        }
+      } catch (e) {
+        if ((e as any).name !== 'AbortError') console.error(e);
+      }
+    }
+    loadAlerts();
     return () => controller.abort();
   }, []);
 
@@ -83,6 +113,46 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Alerts Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Alerts</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Link href="/services?filter=due_in_30_days" className="card hover:shadow-md transition-shadow">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-yellow-100">
+                  <Bell className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Services Due (30 Days)</p>
+                  <p className="text-2xl font-bold text-gray-900">{alertStats.servicesDueInNext30Days}</p>
+                </div>
+              </div>
+            </Link>
+            <Link href="/services?filter=due_status:OVERDUE" className="card hover:shadow-md transition-shadow">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-red-100">
+                  <ShieldAlert className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Service Overdue</p>
+                  <p className="text-2xl font-bold text-gray-900">{alertStats.servicesOverdue}</p>
+                </div>
+              </div>
+            </Link>
+            <Link href="/services?filter=visit_status:PLANNED" className="card hover:shadow-md transition-shadow">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-blue-100">
+                  <Calendar className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Services Planned</p>
+                  <p className="text-2xl font-bold text-gray-900">{alertStats.servicesPlanned}</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
           <div className="lg:col-span-2">
