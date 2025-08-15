@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
 
 interface ServiceJob {
   id: number;
   customerName: string;
-  scheduledDate?: string;
+  visitScheduledDate?: string;
   serviceDueDate: string;
-  status: 'PLANNED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'UNSCHEDULED';
+  serviceDueStatus: ServiceDueStatus;
+  serviceVisitStatus: ServiceVisitStatus;
   jobType: 'INSTALLATION' | 'REPAIR' | 'SERVICE';
   warrantyStatus: 'IN_WARRANTY' | 'IN_CONTRACT' | 'OUT_OF_WARRANTY';
   engineerName?: string;
@@ -22,14 +24,13 @@ export default function ServicesPage() {
   const searchParams = useSearchParams();
   const [services, setServices] = useState<ServiceJob[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBy, setFilterBy] = useState('all');
+  const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle URL parameters for filtering
     const filterParam = searchParams.get('filter');
     if (filterParam) {
-      setFilterBy(filterParam);
+      setFilter(filterParam);
     }
   }, [searchParams]);
 
@@ -39,34 +40,34 @@ export default function ServicesPage() {
       try {
         setLoading(true);
         const params = new URLSearchParams();
-        if (searchTerm) params.set('search', searchTerm);
-        // Map UI filter to API filter values
-        const filterMap: Record<string, string> = {
-          planned: 'planned',
-          completed: 'completed',
-          cancelled: 'cancelled',
-          no_show: 'no_show',
-          unscheduled: 'unscheduled',
-          today: 'today',
-          overdue: 'overdue',
-          due_30_days: 'due_30_days',
-          completed_month: 'completed_month',
-        };
-        if (filterBy in filterMap) params.set('filterBy', filterMap[filterBy]);
-        const res = await fetch(`/api/services${params.toString() ? `?${params.toString()}` : ''}`, {
+        if (searchTerm) {
+          params.set('search', searchTerm);
+        }
+        if (filter !== 'all') {
+          const [filterType, filterValue] = filter.split(':');
+          if (filterType === 'due_status') {
+            params.set('due_status', filterValue);
+          } else if (filterType === 'visit_status') {
+            params.set('visit_status', filterValue);
+          }
+        }
+
+        const res = await fetch(`/api/services?${params.toString()}`, {
           signal: controller.signal,
         });
+
         if (!res.ok) throw new Error('Failed to load services');
         const data = await res.json();
         setServices(
           data.map((s: any) => ({
             id: s.id,
             customerName: s.customer?.fullName ?? '—',
-            scheduledDate: s.scheduledDate,
+            visitScheduledDate: s.visitScheduledDate,
             serviceDueDate: s.serviceDueDate,
-            status: s.status, // Keep original uppercase status
-            jobType: s.jobType, // Keep original uppercase jobType
-            warrantyStatus: s.warrantyStatus, // Keep original uppercase warrantyStatus
+            serviceDueStatus: s.serviceDueStatus,
+            serviceVisitStatus: s.serviceVisitStatus,
+            jobType: s.jobType,
+            warrantyStatus: s.warrantyStatus,
             engineerName: s.engineer?.name ?? undefined,
             billedAmount: s.billedAmount ?? undefined,
             saleId: s.saleId ?? undefined,
@@ -80,18 +81,20 @@ export default function ServicesPage() {
     }
     load();
     return () => controller.abort();
-  }, [searchTerm, filterBy]);
+  }, [searchTerm, filter]);
 
-  const filteredServices = services.filter(service => {
-    const matchesSearch = 
-      service.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.engineerName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // All filtering except search is now done on the server
-    return matchesSearch;
-  });
+  const getServiceDueStatusBadge = (status: ServiceDueStatus) => {
+    switch (status) {
+      case 'DUE':
+        return { text: 'Due', color: 'bg-blue-100 text-blue-800', icon: ShieldCheck };
+      case 'OVERDUE':
+        return { text: 'Overdue', color: 'bg-red-100 text-red-800', icon: ShieldAlert };
+      default:
+        return { text: status, color: 'bg-gray-100 text-gray-800', icon: Clock };
+    }
+  };
 
-  const getStatusBadge = (status: string) => {
+  const getServiceVisitStatusBadge = (status: ServiceVisitStatus) => {
     switch (status) {
       case 'PLANNED':
         return { text: 'Planned', color: 'bg-blue-100 text-blue-800', icon: Clock };
@@ -99,8 +102,6 @@ export default function ServicesPage() {
         return { text: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle };
       case 'CANCELLED':
         return { text: 'Cancelled', color: 'bg-red-100 text-red-800', icon: AlertTriangle };
-      case 'NO_SHOW':
-        return { text: 'No Show', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle };
       case 'UNSCHEDULED':
         return { text: 'Unscheduled', color: 'bg-gray-100 text-gray-800', icon: Calendar };
       default:
@@ -134,15 +135,6 @@ export default function ServicesPage() {
     }
   };
 
-  // Calculate metrics using correct uppercase status values
-  const plannedServices = services.filter(s => s.status === 'PLANNED').length;
-  const completedServices = services.filter(s => s.status === 'COMPLETED').length;
-  const overdueServices = services.filter(s => {
-    const today = new Date();
-    const serviceDueDate = new Date(s.serviceDueDate);
-    return serviceDueDate < today && (s.status === 'PLANNED' || s.status === 'UNSCHEDULED');
-  }).length;
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -162,57 +154,6 @@ export default function ServicesPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Planned</p>
-                <p className="text-2xl font-bold text-gray-900">{plannedServices}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{completedServices}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-red-100">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Overdue</p>
-                <p className="text-2xl font-bold text-gray-900">{overdueServices}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100">
-                <Wrench className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{services.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Search and Filters */}
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -230,23 +171,25 @@ export default function ServicesPage() {
             </div>
             <div className="flex gap-2">
               <select
-                value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value)}
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
                 className="input-field"
               >
                 <option value="all">All Services</option>
-                <option value="planned">Planned</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="no_show">No Show</option>
-                <option value="today">Today</option>
-                <option value="overdue">Overdue</option>
-                <option value="due_30_days">Due in Next 30 Days</option>
-                <option value="completed_month">Completed This Month</option>
+                <optgroup label="By Due Status">
+                  <option value="due_status:DUE">Due</option>
+                  <option value="due_status:OVERDUE">Overdue</option>
+                </optgroup>
+                <optgroup label="By Visit Status">
+                  <option value="visit_status:UNSCHEDULED">Unscheduled</option>
+                  <option value="visit_status:PLANNED">Planned</option>
+                  <option value="visit_status:COMPLETED">Completed</option>
+                  <option value="visit_status:CANCELLED">Cancelled</option>
+                </optgroup>
               </select>
-              {filterBy !== 'all' && (
+              {filter !== 'all' && (
                 <button
-                  onClick={() => setFilterBy('all')}
+                  onClick={() => setFilter('all')}
                   className="btn-secondary"
                 >
                   Clear Filter
@@ -254,18 +197,6 @@ export default function ServicesPage() {
               )}
             </div>
           </div>
-          {filterBy !== 'all' && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Filter Applied:</strong> {filterBy.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                {filteredServices.length > 0 && (
-                  <span className="ml-2 text-blue-600">
-                    ({filteredServices.length} {filteredServices.length === 1 ? 'service' : 'services'} found)
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Services Table */}
@@ -287,7 +218,7 @@ export default function ServicesPage() {
                       Customer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Scheduled Date
+                      Visit Scheduled Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Service Due Date
@@ -299,7 +230,10 @@ export default function ServicesPage() {
                       Sale ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Due Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Visit Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Warranty
@@ -310,9 +244,12 @@ export default function ServicesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredServices.map((service) => {
-                    const statusBadge = getStatusBadge(service.status);
-                    const StatusIcon = statusBadge.icon;
+                  {services.map((service) => {
+                    const dueStatusBadge = getServiceDueStatusBadge(service.serviceDueStatus);
+                    const DueStatusIcon = dueStatusBadge.icon;
+                    const visitStatusBadge = getServiceVisitStatusBadge(service.serviceVisitStatus);
+                    const VisitStatusIcon = visitStatusBadge.icon;
+
                     return (
                       <tr key={service.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -333,7 +270,7 @@ export default function ServicesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {service.scheduledDate ? new Date(service.scheduledDate).toLocaleDateString() : 'Not Scheduled'}
+                            {service.visitScheduledDate ? new Date(service.visitScheduledDate).toLocaleDateString() : 'Not Scheduled'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -358,9 +295,15 @@ export default function ServicesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${statusBadge.color}`}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {statusBadge.text}
+                          <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${dueStatusBadge.color}`}>
+                            <DueStatusIcon className="w-3 h-3 mr-1" />
+                            {dueStatusBadge.text}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${visitStatusBadge.color}`}>
+                            <VisitStatusIcon className="w-3 h-3 mr-1" />
+                            {visitStatusBadge.text}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -376,7 +319,7 @@ export default function ServicesPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
-                            {(service.status === 'PLANNED' || service.status === 'UNSCHEDULED') && (
+                            {(service.serviceVisitStatus === 'PLANNED' || service.serviceVisitStatus === 'UNSCHEDULED') && (
                               <Link
                                 href={`/services/${service.id}/edit`}
                                 className="text-indigo-600 hover:text-indigo-900"
@@ -394,7 +337,7 @@ export default function ServicesPage() {
             </div>
           )}
 
-          {!loading && filteredServices.length === 0 && (
+          {!loading && services.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">No services found</p>
             </div>

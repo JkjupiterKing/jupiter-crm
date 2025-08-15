@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
-    const filterBy = searchParams.get('filterBy');
+    const dueStatus = searchParams.get('due_status');
+    const visitStatus = searchParams.get('visit_status');
 
     let whereClause: any = {};
 
@@ -16,45 +19,12 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (filterBy === 'planned') {
-      whereClause.status = 'PLANNED';
-    } else if (filterBy === 'completed') {
-      whereClause.status = 'COMPLETED';
-    } else if (filterBy === 'cancelled') {
-      whereClause.status = 'CANCELLED';
-    } else if (filterBy === 'no_show') {
-      whereClause.status = 'NO_SHOW';
-    } else if (filterBy === 'unscheduled') {
-      whereClause.status = 'UNSCHEDULED';
-    } else if (filterBy === 'today') {
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-      whereClause.scheduledDate = {
-        gte: startOfDay,
-        lt: endOfDay,
-      };
-    } else if (filterBy === 'overdue') {
-      const today = new Date();
-      whereClause.AND = [
-        { serviceDueDate: { lt: today } },
-        { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
-      ];
-    } else if (filterBy === 'due_30_days') {
-      const today = new Date();
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
-      whereClause.AND = [
-        { serviceDueDate: { gte: today, lte: thirtyDaysFromNow } },
-        { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
-      ];
-    } else if (filterBy === 'completed_month') {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      whereClause.AND = [
-        { scheduledDate: { gte: startOfMonth } },
-        { status: 'COMPLETED' },
-      ];
+    if (dueStatus && Object.values(ServiceDueStatus).includes(dueStatus as ServiceDueStatus)) {
+      whereClause.serviceDueStatus = dueStatus;
+    }
+
+    if (visitStatus && Object.values(ServiceVisitStatus).includes(visitStatus as ServiceVisitStatus)) {
+      whereClause.serviceVisitStatus = visitStatus;
     }
 
     const services = await prisma.serviceJob.findMany({
@@ -75,7 +45,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        scheduledDate: 'asc',
+        visitScheduledDate: 'asc',
       },
     });
 
@@ -131,13 +101,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const visitScheduledDate = body.visitScheduledDate ? new Date(body.visitScheduledDate) : null;
+
+    // Determine statuses
+    const serviceVisitStatus = visitScheduledDate ? ServiceVisitStatus.PLANNED : ServiceVisitStatus.UNSCHEDULED;
+    const serviceDueStatus = serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
+
     const service = await prisma.serviceJob.create({
       data: {
         customerId: body.customerId,
         customerProductId: body.customerProductId,
-        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+        visitScheduledDate: visitScheduledDate,
         serviceDueDate: serviceDueDate,
-        status: body.scheduledDate ? (body.status || 'PLANNED') : 'UNSCHEDULED',
+        serviceDueStatus: serviceDueStatus,
+        serviceVisitStatus: serviceVisitStatus,
         jobType: body.jobType,
         warrantyStatus: body.warrantyStatus,
         engineerId: body.engineerId,
