@@ -22,7 +22,6 @@ interface ServiceJob {
   warrantyStatus: 'IN_WARRANTY' | 'IN_CONTRACT' | 'OUT_OF_WARRANTY';
   engineerName?: string;
   billedAmount?: number;
-  saleId?: number;
   customerProductId: number;
   customerProduct: {
     product: {
@@ -106,7 +105,6 @@ export default function ServicesPage() {
             warrantyStatus: s.warrantyStatus,
             engineerName: s.engineer?.name ?? undefined,
             billedAmount: s.billedAmount ?? undefined,
-            saleId: s.saleId ?? undefined,
             customerProductId: s.customerProductId,
             customerProduct: s.customerProduct,
           }))
@@ -310,20 +308,23 @@ export default function ServicesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Service Details
                     </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {/* No Header for Send Alert */}
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Customer
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Visit Scheduled Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Service Due Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Engineer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sale ID
+                      Service Due Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Due Status
@@ -361,17 +362,27 @@ export default function ServicesPage() {
                             </div>
                           </div>
                         </td>
+                        <td className="px-2 py-4 whitespace-nowrap">
+                          {(service.serviceDueStatus === 'DUE' || service.serviceDueStatus === 'OVERDUE') && (
+                            <button
+                              onClick={() => handleOpenAlertModal(service)}
+                              className="btn-secondary text-xs"
+                            >
+                              Send Alert
+                            </button>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{service.customer.fullName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {service.visitScheduledDate ? new Date(service.visitScheduledDate).toLocaleDateString() : 'Not Scheduled'}
+                            {service.customerProduct.product.name}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(service.serviceDueDate).toLocaleDateString()}
+                            {service.visitScheduledDate ? new Date(service.visitScheduledDate).toLocaleDateString() : 'Not Scheduled'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -381,13 +392,7 @@ export default function ServicesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {service.saleId ? (
-                              <Link href={`/sales/${service.saleId}`} className="text-blue-600 hover:underline">
-                                {service.saleId}
-                              </Link>
-                            ) : (
-                              'N/A'
-                            )}
+                            {new Date(service.serviceDueDate).toLocaleDateString()}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -422,15 +427,6 @@ export default function ServicesPage() {
                               >
                                 <Wrench className="w-4 h-4" />
                               </Link>
-                            )}
-                            {(service.serviceDueStatus === 'DUE' || service.serviceDueStatus === 'OVERDUE') && (
-                              <button
-                                onClick={() => handleOpenAlertModal(service)}
-                                className="text-yellow-600 hover:text-yellow-900"
-                                title="Send Alert"
-                              >
-                                <Bell className="w-4 h-4" />
-                              </button>
                             )}
                           </div>
                         </td>
