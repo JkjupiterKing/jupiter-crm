@@ -2,23 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
 
-enum ServiceDueStatus {
-  DUE = 'DUE',
-  OVERDUE = 'OVERDUE',
-}
-
-const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(serviceDueDate);
-  dueDate.setHours(0, 0, 0, 0);
-
-  if (dueDate < today) {
-    return ServiceDueStatus.OVERDUE;
-  }
-  return ServiceDueStatus.DUE;
-};
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -47,20 +30,21 @@ export async function GET(request: NextRequest) {
       select: {
         serviceDueDate: true,
         serviceVisitStatus: true,
-      }
+      },
     });
 
-    let due = 0;
-    let overdue = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    services.forEach(service => {
-      const status = getServiceDueStatus(service.serviceDueDate);
-      if (status === ServiceDueStatus.DUE) {
-        due++;
-      } else if (status === ServiceDueStatus.OVERDUE) {
-        overdue++;
-      }
-    });
+    const overdue = services.filter(
+      (service) => new Date(service.serviceDueDate) < today
+    ).length;
+
+    const dueIn30Days = services.filter((service) => {
+      const dueDate = new Date(service.serviceDueDate);
+      return dueDate >= today && dueDate <= thirtyDaysFromNow;
+    }).length;
 
     const unscheduledVisits = await prisma.serviceJob.count({
       where: { ...whereClause, serviceVisitStatus: 'UNSCHEDULED' },
@@ -71,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      due,
+      dueIn30Days,
       overdue,
       unscheduled: unscheduledVisits,
       planned: plannedVisits,
