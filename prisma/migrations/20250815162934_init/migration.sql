@@ -5,10 +5,15 @@ CREATE TABLE "Product" (
     "category" TEXT,
     "sku" TEXT NOT NULL,
     "description" TEXT,
-    "price" INTEGER,
-    "warrantyMonths" INTEGER NOT NULL DEFAULT 12,
+    "currentStock" INTEGER NOT NULL DEFAULT 0,
+    "reorderLevel" INTEGER NOT NULL DEFAULT 5,
+    "unitPrice" INTEGER,
+    "costPrice" INTEGER,
+    "manufacturer" TEXT,
+    "model" TEXT,
+    "warrantyPeriod" INTEGER NOT NULL DEFAULT 12,
+    "service_frequency" TEXT NOT NULL DEFAULT 'NONE',
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "stockQuantity" INTEGER NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -32,15 +37,17 @@ CREATE TABLE "SparePart" (
 CREATE TABLE "Customer" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "fullName" TEXT NOT NULL,
-    "doorNumber" TEXT,
-    "street" TEXT,
-    "area" TEXT,
-    "layout" TEXT,
-    "district" TEXT,
-    "pinCode" TEXT,
+    "email" TEXT,
     "mobile" TEXT NOT NULL,
     "altMobile" TEXT,
-    "email" TEXT,
+    "companyName" TEXT,
+    "address" TEXT,
+    "street" TEXT,
+    "city" TEXT,
+    "state" TEXT,
+    "pincode" TEXT,
+    "isVIP" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "notes" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
@@ -50,8 +57,11 @@ CREATE TABLE "Customer" (
 CREATE TABLE "Engineer" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
+    "email" TEXT,
     "phone" TEXT,
-    "active" BOOLEAN NOT NULL DEFAULT true,
+    "mobile" TEXT,
+    "specialization" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -65,6 +75,8 @@ CREATE TABLE "CustomerProduct" (
     "purchaseDate" DATETIME NOT NULL,
     "warrantyExpiry" DATETIME,
     "lastServiceDate" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "CustomerProduct_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "CustomerProduct_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -74,10 +86,13 @@ CREATE TABLE "Sale" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "customerId" INTEGER NOT NULL,
     "invoiceNumber" TEXT NOT NULL,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "total" INTEGER NOT NULL,
+    "saleDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "totalAmount" INTEGER NOT NULL,
     "paymentMode" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PAID',
     "notes" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Sale_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -91,6 +106,8 @@ CREATE TABLE "SaleItem" (
     "quantity" INTEGER NOT NULL,
     "unitPrice" INTEGER NOT NULL,
     "lineTotal" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "SaleItem_saleId_fkey" FOREIGN KEY ("saleId") REFERENCES "Sale" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "SaleItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "SaleItem_sparePartId_fkey" FOREIGN KEY ("sparePartId") REFERENCES "SparePart" ("id") ON DELETE SET NULL ON UPDATE CASCADE
@@ -101,18 +118,23 @@ CREATE TABLE "ServiceJob" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "customerId" INTEGER NOT NULL,
     "customerProductId" INTEGER,
-    "scheduledDate" DATETIME NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'PLANNED',
+    "saleId" INTEGER,
+    "visitScheduledDate" DATETIME,
+    "serviceDueDate" DATETIME NOT NULL,
+    "serviceDueStatus" TEXT NOT NULL DEFAULT 'DUE',
+    "serviceVisitStatus" TEXT NOT NULL DEFAULT 'UNSCHEDULED',
     "jobType" TEXT NOT NULL DEFAULT 'SERVICE',
     "warrantyStatus" TEXT NOT NULL,
     "engineerId" INTEGER,
     "problemDescription" TEXT,
     "resolutionNotes" TEXT,
     "billedAmount" INTEGER,
+    "notes" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "ServiceJob_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "ServiceJob_customerProductId_fkey" FOREIGN KEY ("customerProductId") REFERENCES "CustomerProduct" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "ServiceJob_saleId_fkey" FOREIGN KEY ("saleId") REFERENCES "Sale" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "ServiceJob_engineerId_fkey" FOREIGN KEY ("engineerId") REFERENCES "Engineer" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
@@ -140,7 +162,23 @@ CREATE TABLE "ServiceContract" (
     "frequencyMonths" INTEGER,
     "nextDueDate" DATETIME,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "ServiceContract_customerProductId_fkey" FOREIGN KEY ("customerProductId") REFERENCES "CustomerProduct" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Contract" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "customerId" INTEGER NOT NULL,
+    "contractType" TEXT NOT NULL,
+    "startDate" DATETIME NOT NULL,
+    "endDate" DATETIME NOT NULL,
+    "terms" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Contract_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -150,9 +188,13 @@ CREATE TABLE "InventoryTransaction" (
     "productId" INTEGER,
     "sparePartId" INTEGER,
     "quantity" INTEGER NOT NULL,
-    "kind" TEXT NOT NULL,
-    "note" TEXT,
+    "transactionKind" TEXT NOT NULL,
+    "notes" TEXT,
+    "unitPrice" INTEGER,
+    "totalAmount" INTEGER,
+    "transactionDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "InventoryTransaction_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "InventoryTransaction_sparePartId_fkey" FOREIGN KEY ("sparePartId") REFERENCES "SparePart" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -166,7 +208,9 @@ CREATE TABLE "Notification" (
     "message" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'QUEUED',
     "sentAt" DATETIME,
+    "scheduledAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Notification_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Notification_serviceJobId_fkey" FOREIGN KEY ("serviceJobId") REFERENCES "ServiceJob" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -179,6 +223,12 @@ CREATE INDEX "Product_name_idx" ON "Product"("name");
 
 -- CreateIndex
 CREATE INDEX "Product_sku_idx" ON "Product"("sku");
+
+-- CreateIndex
+CREATE INDEX "Product_category_idx" ON "Product"("category");
+
+-- CreateIndex
+CREATE INDEX "Product_manufacturer_idx" ON "Product"("manufacturer");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SparePart_sku_key" ON "SparePart"("sku");
@@ -196,25 +246,31 @@ CREATE INDEX "SparePart_productId_idx" ON "SparePart"("productId");
 CREATE INDEX "Customer_fullName_idx" ON "Customer"("fullName");
 
 -- CreateIndex
-CREATE INDEX "Customer_doorNumber_idx" ON "Customer"("doorNumber");
+CREATE INDEX "Customer_email_idx" ON "Customer"("email");
 
 -- CreateIndex
 CREATE INDEX "Customer_mobile_idx" ON "Customer"("mobile");
 
 -- CreateIndex
-CREATE INDEX "Customer_area_idx" ON "Customer"("area");
+CREATE INDEX "Customer_companyName_idx" ON "Customer"("companyName");
 
 -- CreateIndex
-CREATE INDEX "Customer_layout_idx" ON "Customer"("layout");
+CREATE INDEX "Customer_city_idx" ON "Customer"("city");
 
 -- CreateIndex
-CREATE INDEX "Customer_pinCode_idx" ON "Customer"("pinCode");
+CREATE INDEX "Customer_state_idx" ON "Customer"("state");
 
 -- CreateIndex
-CREATE INDEX "Customer_district_idx" ON "Customer"("district");
+CREATE INDEX "Customer_pincode_idx" ON "Customer"("pincode");
 
 -- CreateIndex
 CREATE INDEX "Engineer_name_idx" ON "Engineer"("name");
+
+-- CreateIndex
+CREATE INDEX "Engineer_email_idx" ON "Engineer"("email");
+
+-- CreateIndex
+CREATE INDEX "Engineer_specialization_idx" ON "Engineer"("specialization");
 
 -- CreateIndex
 CREATE INDEX "CustomerProduct_customerId_idx" ON "CustomerProduct"("customerId");
@@ -232,7 +288,10 @@ CREATE UNIQUE INDEX "Sale_invoiceNumber_key" ON "Sale"("invoiceNumber");
 CREATE INDEX "Sale_customerId_idx" ON "Sale"("customerId");
 
 -- CreateIndex
-CREATE INDEX "Sale_date_idx" ON "Sale"("date");
+CREATE INDEX "Sale_saleDate_idx" ON "Sale"("saleDate");
+
+-- CreateIndex
+CREATE INDEX "Sale_status_idx" ON "Sale"("status");
 
 -- CreateIndex
 CREATE INDEX "SaleItem_saleId_idx" ON "SaleItem"("saleId");
@@ -253,10 +312,16 @@ CREATE INDEX "ServiceJob_customerProductId_idx" ON "ServiceJob"("customerProduct
 CREATE INDEX "ServiceJob_engineerId_idx" ON "ServiceJob"("engineerId");
 
 -- CreateIndex
-CREATE INDEX "ServiceJob_scheduledDate_idx" ON "ServiceJob"("scheduledDate");
+CREATE INDEX "ServiceJob_visitScheduledDate_idx" ON "ServiceJob"("visitScheduledDate");
 
 -- CreateIndex
-CREATE INDEX "ServiceJob_status_idx" ON "ServiceJob"("status");
+CREATE INDEX "ServiceJob_serviceDueDate_idx" ON "ServiceJob"("serviceDueDate");
+
+-- CreateIndex
+CREATE INDEX "ServiceJob_serviceDueStatus_idx" ON "ServiceJob"("serviceDueStatus");
+
+-- CreateIndex
+CREATE INDEX "ServiceJob_serviceVisitStatus_idx" ON "ServiceJob"("serviceVisitStatus");
 
 -- CreateIndex
 CREATE INDEX "ServiceItem_serviceJobId_idx" ON "ServiceItem"("serviceJobId");
@@ -277,6 +342,18 @@ CREATE INDEX "ServiceContract_endDate_idx" ON "ServiceContract"("endDate");
 CREATE INDEX "ServiceContract_nextDueDate_idx" ON "ServiceContract"("nextDueDate");
 
 -- CreateIndex
+CREATE INDEX "Contract_customerId_idx" ON "Contract"("customerId");
+
+-- CreateIndex
+CREATE INDEX "Contract_startDate_idx" ON "Contract"("startDate");
+
+-- CreateIndex
+CREATE INDEX "Contract_endDate_idx" ON "Contract"("endDate");
+
+-- CreateIndex
+CREATE INDEX "Contract_contractType_idx" ON "Contract"("contractType");
+
+-- CreateIndex
 CREATE INDEX "InventoryTransaction_productId_idx" ON "InventoryTransaction"("productId");
 
 -- CreateIndex
@@ -286,6 +363,9 @@ CREATE INDEX "InventoryTransaction_sparePartId_idx" ON "InventoryTransaction"("s
 CREATE INDEX "InventoryTransaction_createdAt_idx" ON "InventoryTransaction"("createdAt");
 
 -- CreateIndex
+CREATE INDEX "InventoryTransaction_transactionDate_idx" ON "InventoryTransaction"("transactionDate");
+
+-- CreateIndex
 CREATE INDEX "Notification_customerId_idx" ON "Notification"("customerId");
 
 -- CreateIndex
@@ -293,3 +373,6 @@ CREATE INDEX "Notification_serviceJobId_idx" ON "Notification"("serviceJobId");
 
 -- CreateIndex
 CREATE INDEX "Notification_status_idx" ON "Notification"("status");
+
+-- CreateIndex
+CREATE INDEX "Notification_scheduledAt_idx" ON "Notification"("scheduledAt");
