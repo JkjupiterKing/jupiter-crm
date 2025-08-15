@@ -26,8 +26,6 @@ export async function GET(request: NextRequest) {
       whereClause.serviceVisitStatus = visitStatus as ServiceVisitStatus;
     }
 
-    const totalServices = prisma.serviceJob.count({ where: whereClause });
-
     const dueServices = prisma.serviceJob.count({
       where: { ...whereClause, serviceDueStatus: 'DUE' },
     });
@@ -44,40 +42,23 @@ export async function GET(request: NextRequest) {
       where: { ...whereClause, serviceVisitStatus: 'PLANNED' },
     });
 
-    const completedVisits = prisma.serviceJob.count({
-      where: { ...whereClause, serviceVisitStatus: 'COMPLETED' },
-    });
-
-    const cancelledVisits = prisma.serviceJob.count({
-      where: { ...whereClause, serviceVisitStatus: 'CANCELLED' },
-    });
-
     const [
-      total,
       due,
       overdue,
       unscheduled,
       planned,
-      completed,
-      cancelled,
     ] = await Promise.all([
-      totalServices,
       dueServices,
       overdueServices,
       unscheduledVisits,
       plannedVisits,
-      completedVisits,
-      cancelledVisits,
     ]);
 
     return NextResponse.json({
-      total,
       due,
       overdue,
       unscheduled,
       planned,
-      completed,
-      cancelled,
     });
   } catch (error) {
     console.error('Error fetching service counts:', error);

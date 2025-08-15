@@ -21,13 +21,10 @@ interface ServiceJob {
 }
 
 interface ServiceMetrics {
-  total: number;
   due: number;
   overdue: number;
   unscheduled: number;
   planned: number;
-  completed: number;
-  cancelled: number;
 }
 
 export default function ServicesPage() {
@@ -180,20 +177,8 @@ export default function ServicesPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100">
-                <Package className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Services</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics?.total ?? '...'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="card" data-testid="metric-card-due">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-blue-100">
                 <ShieldCheck className="w-6 h-6 text-blue-600" />
@@ -205,7 +190,7 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card" data-testid="metric-card-overdue">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-red-100">
                 <ShieldAlert className="w-6 h-6 text-red-600" />
@@ -217,7 +202,7 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card" data-testid="metric-card-unscheduled">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-gray-100">
                 <Calendar className="w-6 h-6 text-gray-600" />
@@ -229,7 +214,7 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card" data-testid="metric-card-planned">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-blue-100">
                 <Clock className="w-6 h-6 text-blue-600" />
@@ -237,30 +222,6 @@ export default function ServicesPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Planned</p>
                 <p className="text-2xl font-bold text-gray-900">{metrics?.planned ?? '...'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics?.completed ?? '...'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-red-100">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Cancelled</p>
-                <p className="text-2xl font-bold text-gray-900">{metrics?.cancelled ?? '...'}</p>
               </div>
             </div>
           </div>
