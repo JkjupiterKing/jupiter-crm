@@ -22,9 +22,6 @@ interface DashboardStats {
   totalProducts: number;
   totalSales: number;
   totalServiceRequests: number;
-  serviceDue30Days: number;
-  overdueServices: number;
-  completedThisMonth: number;
 }
 
 export default function Dashboard() {
@@ -33,51 +30,16 @@ export default function Dashboard() {
     totalProducts: 0,
     totalSales: 0,
     totalServiceRequests: 0,
-    serviceDue30Days: 0,
-    overdueServices: 0,
-    completedThisMonth: 0
   });
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {
-        const [
-          dashboardRes,
-          overdueRes,
-          due30DaysRes,
-          completedMonthRes,
-        ] = await Promise.all([
-          fetch('/api/dashboard', { signal: controller.signal }),
-          fetch('/api/services?filterBy=overdue', { signal: controller.signal }),
-          fetch('/api/services?filterBy=due_30_days', { signal: controller.signal }),
-          fetch('/api/services?filterBy=completed_month', { signal: controller.signal }),
-        ]);
-
-        if (dashboardRes.ok) {
-          const data = await dashboardRes.json();
-          setStats(prev => ({
-            ...prev,
-            totalCustomers: data.stats.totalCustomers,
-            totalProducts: data.stats.totalProducts,
-            totalSales: data.stats.totalSales,
-            totalServiceRequests: data.stats.totalServiceRequests,
-          }));
-        }
-
-        if (overdueRes.ok) {
-          const data = await overdueRes.json();
-          setStats(prev => ({ ...prev, overdueServices: data.length }));
-        }
-
-        if (due30DaysRes.ok) {
-          const data = await due30DaysRes.json();
-          setStats(prev => ({ ...prev, serviceDue30Days: data.length }));
-        }
-
-        if (completedMonthRes.ok) {
-          const data = await completedMonthRes.json();
-          setStats(prev => ({ ...prev, completedThisMonth: data.length }));
+        const res = await fetch('/api/dashboard', { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.stats);
         }
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
@@ -118,67 +80,9 @@ export default function Dashboard() {
     }
   ];
 
-  const alerts = [
-    {
-      type: 'warning',
-      message: 'services are overdue',
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      href: '/services?filter=overdue',
-      count: stats.overdueServices
-    },
-    {
-      type: 'info',
-      message: 'services due in next 30 days',
-      icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      href: '/services?filter=due_30_days',
-      count: stats.serviceDue30Days
-    },
-    {
-      type: 'success',
-      message: 'services completed this month',
-      icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      href: '/services?filter=completed_month',
-      count: stats.completedThisMonth
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        
-        {/* Alerts - Main Area */}
-        <div className="mb-8">
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Alerts</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {alerts.map((alert, index) => (
-                <Link
-                  key={index}
-                  href={alert.href}
-                  className={`flex flex-col p-6 ${alert.bgColor} rounded-xl border-2 border-transparent hover:border-gray-300 transition-all duration-200 hover:shadow-md cursor-pointer group`}
-                >
-                  <div className="flex items-center justify-center mb-3">
-                    <div className={`p-3 rounded-full ${alert.bgColor.replace('bg-', 'bg-').replace('-50', '-100')} group-hover:scale-110 transition-transform duration-200`}>
-                      <alert.icon className={`w-6 h-6 ${alert.color}`} />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-900 mb-2">{alert.count}</div>
-                    <p className="text-sm font-medium text-gray-700">{alert.message}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
           <div className="lg:col-span-2">

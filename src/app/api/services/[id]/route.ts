@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
 
 export async function GET(
   _request: NextRequest,
@@ -31,35 +32,57 @@ export async function PATCH(
   try {
     const id = parseInt(params.id, 10);
     const body = await request.json();
+
+    const dataToUpdate: any = {};
+
+    // Direct field updates
+    if (body.customerId) dataToUpdate.customerId = body.customerId;
+    if (body.customerProductId) dataToUpdate.customerProductId = body.customerProductId;
+    if (body.jobType) dataToUpdate.jobType = body.jobType;
+    if (body.warrantyStatus) dataToUpdate.warrantyStatus = body.warrantyStatus;
+    if (body.engineerId) dataToUpdate.engineerId = body.engineerId;
+    if (body.problemDescription) dataToUpdate.problemDescription = body.problemDescription;
+    if (body.resolutionNotes) dataToUpdate.resolutionNotes = body.resolutionNotes;
+    if (typeof body.billedAmount === 'number') {
+      dataToUpdate.billedAmount = body.billedAmount;
+    }
+
+    // Handle date and status updates
+    if (body.visitScheduledDate) {
+      dataToUpdate.visitScheduledDate = new Date(body.visitScheduledDate);
+    }
+    if (body.serviceDueDate) {
+      dataToUpdate.serviceDueDate = new Date(body.serviceDueDate);
+      dataToUpdate.serviceDueStatus = dataToUpdate.serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
+    }
+
+    // Handle visit status - manual override takes precedence
+    if (body.serviceVisitStatus && Object.values(ServiceVisitStatus).includes(body.serviceVisitStatus)) {
+      dataToUpdate.serviceVisitStatus = body.serviceVisitStatus;
+    } else if (body.visitScheduledDate) {
+      // If date is changed, recalculate status if not manually set
+      dataToUpdate.serviceVisitStatus = ServiceVisitStatus.PLANNED;
+    } else if (body.visitScheduledDate === null) {
+      dataToUpdate.serviceVisitStatus = ServiceVisitStatus.UNSCHEDULED;
+    }
+
+    // Handle items update
+    if (Array.isArray(body.items)) {
+      dataToUpdate.items = {
+        deleteMany: {},
+        create: body.items.map((item: any) => ({
+          productId: item.productId,
+          sparePartId: item.sparePartId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          coveredByWarranty: !!item.coveredByWarranty,
+        })),
+      };
+    }
+
     const job = await prisma.serviceJob.update({
       where: { id },
-      data: {
-        customerId: body.customerId,
-        customerProductId: body.customerProductId,
-        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
-        serviceDueDate: body.serviceDueDate ? new Date(body.serviceDueDate) : undefined,
-        status: body.scheduledDate ? body.status : 'UNSCHEDULED',
-        jobType: body.jobType,
-        warrantyStatus: body.warrantyStatus,
-        engineerId: body.engineerId,
-        problemDescription: body.problemDescription,
-        resolutionNotes: body.resolutionNotes,
-        billedAmount: typeof body.billedAmount === 'number' ? body.billedAmount : body.billedAmount ? parseInt(body.billedAmount) : undefined,
-        ...(Array.isArray(body.items)
-          ? {
-              items: {
-                deleteMany: {},
-                create: body.items.map((item: any) => ({
-                  productId: item.productId,
-                  sparePartId: item.sparePartId,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice,
-                  coveredByWarranty: !!item.coveredByWarranty,
-                })),
-              },
-            }
-          : {}),
-      },
+      data: dataToUpdate,
       include: {
         customer: true,
         customerProduct: { include: { product: true } },

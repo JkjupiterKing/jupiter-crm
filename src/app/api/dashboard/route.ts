@@ -8,44 +8,12 @@ export async function GET() {
       totalCustomers,
       totalProducts,
       totalSales,
-      totalServiceRequests,
-      pendingServices,
-      serviceDue30Days,
-      overdueServices,
-      completedServicesThisMonth,
+      totalServiceRequests
     ] = await Promise.all([
       prisma.customer.count(),
       prisma.product.count(),
       prisma.sale.count(),
-      prisma.serviceJob.count(),
-      prisma.serviceJob.count({
-        where: { status: { in: ['PLANNED', 'UNSCHEDULED'] } },
-      }),
-      prisma.serviceJob.count({
-        where: {
-          status: { in: ['PLANNED', 'UNSCHEDULED'] },
-          serviceDueDate: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          },
-        },
-      }),
-      prisma.serviceJob.count({
-        where: {
-          status: { in: ['PLANNED', 'UNSCHEDULED'] },
-          serviceDueDate: {
-            lt: new Date(),
-          },
-        },
-      }),
-      prisma.serviceJob.count({
-        where: {
-          status: 'COMPLETED',
-          scheduledDate: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Start of current month
-          },
-        },
-      }),
+      prisma.serviceJob.count()
     ]);
 
     // Get recent activities
@@ -66,7 +34,7 @@ export async function GET() {
         engineer: true,
       },
       orderBy: {
-        scheduledDate: 'desc',
+        visitScheduledDate: 'desc',
       },
     });
 
@@ -91,7 +59,7 @@ export async function GET() {
 
     const todaysServices = await prisma.serviceJob.findMany({
       where: {
-        scheduledDate: {
+        visitScheduledDate: {
           gte: startOfDay,
           lt: endOfDay,
         },
@@ -101,7 +69,7 @@ export async function GET() {
         engineer: true,
       },
       orderBy: {
-        scheduledDate: 'asc',
+        visitScheduledDate: 'asc',
       },
     });
 
@@ -110,11 +78,7 @@ export async function GET() {
         totalCustomers,
         totalProducts,
         totalSales,
-        totalServiceRequests,
-        pendingServices,
-        serviceDue30Days,
-        overdueServices,
-        completedServicesThisMonth,
+        totalServiceRequests
       },
       recentSales,
       recentServices,

@@ -28,12 +28,16 @@ enum SaleItemType {
   SPARE_PART
 }
 
-enum ServiceStatus {
+enum ServiceDueStatus {
+  DUE
+  OVERDUE
+}
+
+enum ServiceVisitStatus {
+  UNSCHEDULED
   PLANNED
   COMPLETED
   CANCELLED
-  NO_SHOW
-  UNSCHEDULED
 }
 
 enum JobType {
@@ -262,9 +266,10 @@ model ServiceJob {
   saleId             Int?
   sale               Sale?             @relation(fields: [saleId], references: [id])
 
-  scheduledDate      DateTime?
+  visitScheduledDate DateTime?
   serviceDueDate     DateTime
-  status             ServiceStatus     @default(PLANNED)
+  serviceDueStatus   ServiceDueStatus  @default(DUE)
+  serviceVisitStatus ServiceVisitStatus @default(UNSCHEDULED)
   jobType            JobType           @default(SERVICE)
   warrantyStatus     WarrantyStatus
 
@@ -285,9 +290,10 @@ model ServiceJob {
   @@index([customerId])
   @@index([customerProductId])
   @@index([engineerId])
-  @@index([scheduledDate])
+  @@index([visitScheduledDate])
   @@index([serviceDueDate])
-  @@index([status])
+  @@index([serviceDueStatus])
+  @@index([serviceVisitStatus])
 }
 
 model ServiceItem {

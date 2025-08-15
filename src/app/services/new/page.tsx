@@ -13,9 +13,8 @@ export default function NewServicePage() {
   const [formData, setFormData] = useState<any>({
     customerId: '',
     customerProductId: '',
-    scheduledDate: '',
+    visitScheduledDate: '',
     serviceDueDate: '',
-    status: 'PLANNED',
     jobType: 'SERVICE',
     warrantyStatus: 'IN_WARRANTY',
     engineerId: '',
@@ -56,7 +55,7 @@ export default function NewServicePage() {
         ...formData,
         customerId: Number(formData.customerId),
         customerProductId: formData.customerProductId ? Number(formData.customerProductId) : null,
-        scheduledDate: formData.scheduledDate,
+        visitScheduledDate: formData.visitScheduledDate,
         serviceDueDate: formData.serviceDueDate,
         engineerId: formData.engineerId ? Number(formData.engineerId) : null,
         billedAmount: formData.billedAmount ? Number(formData.billedAmount) : null,
@@ -109,8 +108,8 @@ export default function NewServicePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
-              <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="input-field" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Visit Scheduled Date</label>
+              <input type="datetime-local" name="visitScheduledDate" value={formData.visitScheduledDate} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Service Due Date *</label>

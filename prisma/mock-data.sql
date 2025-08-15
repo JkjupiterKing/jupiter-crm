@@ -72,17 +72,18 @@ INSERT INTO SaleItem (id, saleId, productId, quantity, unitPrice, lineTotal, ite
 (5, 5, 4, 1, 120000, 120000, 'PRODUCT', '2024-01-24 13:00:00', '2024-01-24 13:00:00');
 
 -- Insert Service Jobs
-INSERT INTO ServiceJob (id, customerId, engineerId, scheduledDate, serviceDueDate, status, jobType, warrantyStatus, billedAmount, notes, createdAt, updatedAt) VALUES
-(1, 1, 2, '2024-02-01 09:00:00', '2024-02-01 09:00:00', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'Installation of industrial air compressor', '2024-01-25 10:00:00', '2024-01-25 10:00:00'),
-(2, 2, 1, '2024-02-02 10:00:00', NULL, 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'HVAC system installation and commissioning', '2024-01-26 11:00:00', '2024-01-26 11:00:00'),
-(3, 3, 3, '2024-02-03 11:00:00', '2024-02-03 11:00:00', 'COMPLETED', 'SERVICE', 'IN_WARRANTY', 2000, 'Annual maintenance of water pump system', '2024-01-27 12:00:00', '2024-01-27 12:00:00'),
-(4, 4, 5, '2024-02-04 12:00:00', '2025-12-04 12:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Conveyor belt repair and maintenance', '2024-01-28 13:00:00', '2024-01-28 13:00:00'),
-(5, 5, 4, '2024-02-05 13:00:00', '2026-02-05 13:00:00', 'PLANNED', 'SERVICE', 'IN_CONTRACT', NULL, 'Monthly generator maintenance service', '2024-01-29 14:00:00', '2024-01-29 14:00:00'),
--- Mock data for dashboard alerts (relative to 2025-08-10)
-(6, 1, NULL, '2025-08-01 10:00:00', '2025-08-01 10:00:00', 'PLANNED', 'SERVICE', 'IN_WARRANTY', NULL, 'Mock: Overdue service', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
-(7, 2, 1, '2025-08-20 14:00:00', '2025-08-20 14:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Mock: Service due soon', '2025-08-10 11:00:00', '2025-08-10 11:00:00'),
-(8, 3, 3, '2025-08-05 11:00:00', '2025-08-05 11:00:00', 'COMPLETED', 'SERVICE', 'IN_CONTRACT', 1500, 'Mock: Service completed this month', '2025-08-05 11:00:00', '2025-08-05 11:00:00'),
-(9, 1, NULL, NULL, '2025-09-01 10:00:00', 'UNSCHEDULED', 'SERVICE', 'IN_WARRANTY', NULL, 'Mock: Unscheduled service', '2025-08-10 12:00:00', '2025-08-10 12:00:00');
+INSERT INTO "ServiceJob" (id, customerId, engineerId, visitScheduledDate, serviceDueDate, serviceDueStatus, serviceVisitStatus, jobType, warrantyStatus, billedAmount, notes, createdAt, updatedAt) VALUES
+(1, 1, 2, '2025-09-01 09:00:00', '2025-09-01 09:00:00', 'DUE', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'Installation of industrial air compressor', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(2, 2, 1, '2025-09-02 10:00:00', '2025-09-02 10:00:00', 'DUE', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'HVAC system installation and commissioning', '2025-08-01 11:00:00', '2025-08-01 11:00:00'),
+(3, 3, 3, '2025-08-03 11:00:00', '2025-08-03 11:00:00', 'OVERDUE', 'COMPLETED', 'SERVICE', 'IN_WARRANTY', 2000, 'Annual maintenance of water pump system', '2025-07-27 12:00:00', '2025-07-27 12:00:00'),
+(4, 4, 5, '2025-09-04 12:00:00', '2025-12-04 12:00:00', 'DUE', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Conveyor belt repair and maintenance', '2025-08-01 13:00:00', '2025-08-01 13:00:00'),
+(5, 5, 4, '2026-02-05 13:00:00', '2026-02-05 13:00:00', 'DUE', 'PLANNED', 'SERVICE', 'IN_CONTRACT', NULL, 'Monthly generator maintenance service', '2025-08-01 14:00:00', '2025-08-01 14:00:00'),
+-- Mock data for various statuses (relative to 2025-08-15)
+(6, 1, NULL, '2025-08-01 10:00:00', '2025-08-01 10:00:00', 'OVERDUE', 'PLANNED', 'SERVICE', 'IN_WARRANTY', NULL, 'Mock: Overdue service, visit planned but missed', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(7, 2, 1, '2025-08-20 14:00:00', '2025-08-20 14:00:00', 'DUE', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Mock: Service due soon, visit planned', '2025-08-10 11:00:00', '2025-08-10 11:00:00'),
+(8, 3, 3, '2025-08-05 11:00:00', '2025-08-05 11:00:00', 'OVERDUE', 'COMPLETED', 'SERVICE', 'IN_CONTRACT', 1500, 'Mock: Service completed this month', '2025-08-05 11:00:00', '2025-08-05 11:00:00'),
+(9, 1, NULL, NULL, '2025-09-01 10:00:00', 'DUE', 'UNSCHEDULED', 'SERVICE', 'IN_WARRANTY', NULL, 'Mock: Unscheduled service', '2025-08-10 12:00:00', '2025-08-10 12:00:00'),
+(10, 2, 2, '2025-08-14 10:00:00', '2025-08-14 10:00:00', 'OVERDUE', 'CANCELLED', 'SERVICE', 'OUT_OF_WARRANTY', NULL, 'Mock: Cancelled Service', '2025-08-10 12:00:00', '2025-08-10 12:00:00');
 
 -- Insert Customer Products
 INSERT INTO CustomerProduct (id, customerId, productId, serialNumber, purchaseDate, warrantyExpiry, lastServiceDate, createdAt, updatedAt) VALUES
