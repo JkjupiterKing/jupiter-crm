@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
 
+interface ServiceItemData {
+  productId?: number;
+  sparePartId?: number;
+  quantity: number;
+  unitPrice: number;
+  coveredByWarranty: boolean;
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
@@ -33,7 +41,7 @@ export async function PATCH(
     const id = parseInt(params.id, 10);
     const body = await request.json();
 
-    const dataToUpdate: any = {};
+    const dataToUpdate: { [key: string]: string | number | Date | null | undefined | { deleteMany: {}; create: ServiceItemData[]; } } = {};
 
     // Direct field updates
     if (body.customerId) dataToUpdate.customerId = body.customerId;
@@ -53,7 +61,6 @@ export async function PATCH(
     }
     if (body.serviceDueDate) {
       dataToUpdate.serviceDueDate = new Date(body.serviceDueDate);
-      dataToUpdate.serviceDueStatus = dataToUpdate.serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
     }
 
     // Handle visit status - manual override takes precedence
@@ -66,11 +73,25 @@ export async function PATCH(
       dataToUpdate.serviceVisitStatus = ServiceVisitStatus.UNSCHEDULED;
     }
 
+    // Determine final due status. This must come after visit status is determined.
+    if (
+      dataToUpdate.serviceVisitStatus === ServiceVisitStatus.COMPLETED ||
+      dataToUpdate.serviceVisitStatus === ServiceVisitStatus.CANCELLED
+    ) {
+      dataToUpdate.serviceDueStatus = null;
+    } else if (dataToUpdate.serviceDueDate) {
+      // If due date is provided, calculate due status
+      dataToUpdate.serviceDueStatus = (dataToUpdate.serviceDueDate as Date) < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
+    } else if (body.serviceDueDate === null) {
+      // If due date is explicitly set to null
+      dataToUpdate.serviceDueStatus = null;
+    }
+
     // Handle items update
     if (Array.isArray(body.items)) {
       dataToUpdate.items = {
         deleteMany: {},
-        create: body.items.map((item: any) => ({
+        create: body.items.map((item: ServiceItemData) => ({
           productId: item.productId,
           sparePartId: item.sparePartId,
           quantity: item.quantity,

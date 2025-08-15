@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const visitStatus = searchParams.get('visit_status');
     const filter = searchParams.get('filter');
 
-    let whereClause: any = {};
+    const whereClause: { [key: string]: any } = {};
 
     if (search) {
       whereClause.OR = [
@@ -115,8 +115,19 @@ export async function POST(request: NextRequest) {
     const visitScheduledDate = body.visitScheduledDate ? new Date(body.visitScheduledDate) : null;
 
     // Determine statuses
-    const serviceVisitStatus = visitScheduledDate ? ServiceVisitStatus.PLANNED : ServiceVisitStatus.UNSCHEDULED;
-    const serviceDueStatus = serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
+    let serviceVisitStatus = body.serviceVisitStatus;
+    if (!serviceVisitStatus || !Object.values(ServiceVisitStatus).includes(serviceVisitStatus)) {
+      serviceVisitStatus = visitScheduledDate ? ServiceVisitStatus.PLANNED : ServiceVisitStatus.UNSCHEDULED;
+    }
+
+    let serviceDueStatus: ServiceDueStatus | null = serviceDueDate < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
+
+    if (
+      serviceVisitStatus === ServiceVisitStatus.COMPLETED ||
+      serviceVisitStatus === ServiceVisitStatus.CANCELLED
+    ) {
+      serviceDueStatus = null;
+    }
 
     const service = await prisma.serviceJob.create({
       data: {
@@ -134,7 +145,7 @@ export async function POST(request: NextRequest) {
         resolutionNotes: body.resolutionNotes,
         billedAmount: body.billedAmount ? parseInt(body.billedAmount) : null,
         items: {
-          create: body.items?.map((item: any) => ({
+        create: body.items?.map((item: { productId: any; sparePartId: any; quantity: any; unitPrice: any; coveredByWarranty: any; }) => ({
             productId: item.productId,
             sparePartId: item.sparePartId,
             quantity: item.quantity,

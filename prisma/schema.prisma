@@ -268,7 +268,7 @@ model ServiceJob {
 
   visitScheduledDate DateTime?
   serviceDueDate     DateTime
-  serviceDueStatus   ServiceDueStatus  @default(DUE)
+  serviceDueStatus   ServiceDueStatus?
   serviceVisitStatus ServiceVisitStatus @default(UNSCHEDULED)
   jobType            JobType           @default(SERVICE)
   warrantyStatus     WarrantyStatus
