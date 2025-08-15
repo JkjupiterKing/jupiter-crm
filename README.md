@@ -97,9 +97,6 @@ The application supports a **mock mode** for development and testing purposes. T
 ```bash
 # Start development server with mock data
 npm run dev:mock
-
-# Or manually set environment variable
-MOCK_MODE=true npm run dev
 ```
 
 ### Mock Mode Features
@@ -120,9 +117,6 @@ MOCK_MODE=true npm run dev
 ```bash
 # Generate mock database schema
 npm run db:mock
-
-# Seed mock database with test data
-npm run db:seed
 
 # Reset mock database (deletes and recreates)
 rm prisma/mock.db && npm run dev:mock
