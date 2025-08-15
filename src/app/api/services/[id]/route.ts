@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
+import { ServiceVisitStatus } from '@prisma/client';
 
 interface ServiceItemData {
   productId?: number;
@@ -71,20 +71,6 @@ export async function PATCH(
       dataToUpdate.serviceVisitStatus = ServiceVisitStatus.PLANNED;
     } else if (body.visitScheduledDate === null) {
       dataToUpdate.serviceVisitStatus = ServiceVisitStatus.UNSCHEDULED;
-    }
-
-    // Determine final due status. This must come after visit status is determined.
-    if (
-      dataToUpdate.serviceVisitStatus === ServiceVisitStatus.COMPLETED ||
-      dataToUpdate.serviceVisitStatus === ServiceVisitStatus.CANCELLED
-    ) {
-      dataToUpdate.serviceDueStatus = null;
-    } else if (dataToUpdate.serviceDueDate) {
-      // If due date is provided, calculate due status
-      dataToUpdate.serviceDueStatus = (dataToUpdate.serviceDueDate as Date) < new Date() ? ServiceDueStatus.OVERDUE : ServiceDueStatus.DUE;
-    } else if (body.serviceDueDate === null) {
-      // If due date is explicitly set to null
-      dataToUpdate.serviceDueStatus = null;
     }
 
     // Handle items update
