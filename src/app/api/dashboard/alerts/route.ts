@@ -6,8 +6,7 @@ export async function GET() {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     const services = await prisma.serviceJob.findMany({
       where: {
