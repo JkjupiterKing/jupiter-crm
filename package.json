@@ -12,7 +12,6 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:mock": "cross-env MOCK_MODE=true npx prisma db push --schema=./prisma/schema.prisma",
-    "db:seed": "cross-env MOCK_MODE=true node scripts/seed-mock-db.js",
     "db:manage": "node scripts/db-manager.js"
   },
   "dependencies": {
