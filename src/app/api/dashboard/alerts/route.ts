@@ -6,8 +6,8 @@ export async function GET() {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
     const services = await prisma.serviceJob.findMany({
       where: {
@@ -33,6 +33,9 @@ export async function GET() {
           serviceDueDate: {
             gte: today,
             lte: thirtyDaysFromNow,
+          },
+          serviceVisitStatus: {
+            notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED],
           },
         },
       }),
