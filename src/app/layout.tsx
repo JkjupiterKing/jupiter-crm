@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import ModeBanner from "@/components/ModeBanner";
+import { ToastProvider } from "@/components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Pratham Enterprises",
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-50">
-        <Navigation />
-        <ModeBanner />
-        {children}
+        <ToastProvider>
+          <Navigation />
+          <ModeBanner />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

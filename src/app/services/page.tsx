@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, Package } from 'lucide-react';
-import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
+import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, Bell } from 'lucide-react';
+import { ServiceDueStatus, ServiceVisitStatus, Customer } from '@prisma/client';
 
 interface ServiceJob {
   id: number;
-  customerName: string;
+  customer: Customer;
   visitScheduledDate?: string;
   serviceDueDate: string;
   serviceDueStatus: ServiceDueStatus;
@@ -18,6 +18,12 @@ interface ServiceJob {
   engineerName?: string;
   billedAmount?: number;
   saleId?: number;
+  customerProductId: number;
+  customerProduct: {
+    product: {
+      name: string;
+    };
+  };
 }
 
 interface ServiceMetrics {
@@ -27,6 +33,8 @@ interface ServiceMetrics {
   planned: number;
 }
 
+import SendAlertModal from '@/components/SendAlertModal';
+
 export default function ServicesPage() {
   const searchParams = useSearchParams();
   const [services, setServices] = useState<ServiceJob[]>([]);
@@ -34,6 +42,13 @@ export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [isAlertModalOpen, setAlertModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<ServiceJob | null>(null);
+
+  const handleOpenAlertModal = (service: ServiceJob) => {
+    setSelectedService(service);
+    setAlertModalOpen(true);
+  };
 
   useEffect(() => {
     const filterParam = searchParams.get('filter');
@@ -73,11 +88,11 @@ export default function ServicesPage() {
         ]);
 
         if (!servicesRes.ok) throw new Error('Failed to load services');
-        const servicesData = await servicesRes.json();
+        const servicesData: ServiceJob[] = await servicesRes.json();
         setServices(
-          servicesData.map((s: any) => ({
+          servicesData.map((s) => ({
             id: s.id,
-            customerName: s.customer?.fullName ?? '—',
+            customer: s.customer,
             visitScheduledDate: s.visitScheduledDate,
             serviceDueDate: s.serviceDueDate,
             serviceDueStatus: s.serviceDueStatus,
@@ -87,15 +102,17 @@ export default function ServicesPage() {
             engineerName: s.engineer?.name ?? undefined,
             billedAmount: s.billedAmount ?? undefined,
             saleId: s.saleId ?? undefined,
+            customerProductId: s.customerProductId,
+            customerProduct: s.customerProduct,
           }))
         );
 
         if (!metricsRes.ok) throw new Error('Failed to load metrics');
-        const metricsData = await metricsRes.json();
+        const metricsData: ServiceMetrics = await metricsRes.json();
         setMetrics(metricsData);
 
       } catch (e) {
-        if ((e as any).name !== 'AbortError') console.error(e);
+        if ((e as Error).name !== 'AbortError') console.error(e);
       } finally {
         setLoading(false);
       }
@@ -340,7 +357,7 @@ export default function ServicesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{service.customerName}</div>
+                          <div className="text-sm text-gray-900">{service.customer.fullName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
@@ -401,6 +418,15 @@ export default function ServicesPage() {
                                 <Wrench className="w-4 h-4" />
                               </Link>
                             )}
+                            {(service.serviceDueStatus === 'DUE' || service.serviceDueStatus === 'OVERDUE') && (
+                              <button
+                                onClick={() => handleOpenAlertModal(service)}
+                                className="text-yellow-600 hover:text-yellow-900"
+                                title="Send Alert"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -418,6 +444,11 @@ export default function ServicesPage() {
           )}
         </div>
       </div>
+      <SendAlertModal
+        isOpen={isAlertModalOpen}
+        onClose={() => setAlertModalOpen(false)}
+        service={selectedService}
+      />
     </div>
   );
 }
