@@ -23,27 +23,16 @@ export async function GET() {
       (service) => new Date(service.serviceDueDate) < today
     ).length;
 
-    const [
-      servicesDueInNext30Days,
-      servicesPlanned,
-    ] = await Promise.all([
-      prisma.serviceJob.count({
-        where: {
-          serviceDueDate: {
-            gte: today,
-            lte: thirtyDaysFromNow,
-          },
-          serviceVisitStatus: {
-            notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED],
-          },
-        },
-      }),
-      prisma.serviceJob.count({
-        where: {
-          serviceVisitStatus: 'PLANNED',
-        },
-      }),
-    ]);
+    const servicesDueInNext30Days = services.filter((service) => {
+      const dueDate = new Date(service.serviceDueDate);
+      return dueDate >= today && dueDate <= thirtyDaysFromNow;
+    }).length;
+
+    const servicesPlanned = await prisma.serviceJob.count({
+      where: {
+        serviceVisitStatus: 'PLANNED',
+      },
+    });
 
     return NextResponse.json({
       servicesDueInNext30Days,
