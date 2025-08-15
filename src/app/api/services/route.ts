@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const dueStatus = searchParams.get('due_status');
     const visitStatus = searchParams.get('visit_status');
+    const filter = searchParams.get('filter');
 
     let whereClause: any = {};
 
@@ -25,6 +26,16 @@ export async function GET(request: NextRequest) {
 
     if (visitStatus && Object.values(ServiceVisitStatus).includes(visitStatus as ServiceVisitStatus)) {
       whereClause.serviceVisitStatus = visitStatus;
+    }
+
+    if (filter === 'due_in_30_days') {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      whereClause.serviceDueDate = {
+        gte: today,
+        lte: thirtyDaysFromNow,
+      };
     }
 
     const services = await prisma.serviceJob.findMany({
