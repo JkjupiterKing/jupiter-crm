@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, Package } from 'lucide-react';
 import { ServiceDueStatus, ServiceVisitStatus } from '@prisma/client';
 
 interface ServiceJob {
@@ -20,9 +20,20 @@ interface ServiceJob {
   saleId?: number;
 }
 
+interface ServiceMetrics {
+  total: number;
+  due: number;
+  overdue: number;
+  unscheduled: number;
+  planned: number;
+  completed: number;
+  cancelled: number;
+}
+
 export default function ServicesPage() {
   const searchParams = useSearchParams();
   const [services, setServices] = useState<ServiceJob[]>([]);
+  const [metrics, setMetrics] = useState<ServiceMetrics | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -36,7 +47,9 @@ export default function ServicesPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    async function load() {
+    const { signal } = controller;
+
+    async function loadData() {
       try {
         setLoading(true);
         const params = new URLSearchParams();
@@ -52,14 +65,16 @@ export default function ServicesPage() {
           }
         }
 
-        const res = await fetch(`/api/services?${params.toString()}`, {
-          signal: controller.signal,
-        });
+        // Fetch services and metrics in parallel
+        const [servicesRes, metricsRes] = await Promise.all([
+          fetch(`/api/services?${params.toString()}`, { signal }),
+          fetch(`/api/services/counts?${params.toString()}`, { signal })
+        ]);
 
-        if (!res.ok) throw new Error('Failed to load services');
-        const data = await res.json();
+        if (!servicesRes.ok) throw new Error('Failed to load services');
+        const servicesData = await servicesRes.json();
         setServices(
-          data.map((s: any) => ({
+          servicesData.map((s: any) => ({
             id: s.id,
             customerName: s.customer?.fullName ?? '—',
             visitScheduledDate: s.visitScheduledDate,
@@ -73,13 +88,19 @@ export default function ServicesPage() {
             saleId: s.saleId ?? undefined,
           }))
         );
+
+        if (!metricsRes.ok) throw new Error('Failed to load metrics');
+        const metricsData = await metricsRes.json();
+        setMetrics(metricsData);
+
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
       } finally {
         setLoading(false);
       }
     }
-    load();
+
+    loadData();
     return () => controller.abort();
   }, [searchTerm, filter]);
 
@@ -154,6 +175,93 @@ export default function ServicesPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 mb-8">
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Package className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Services</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.total ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100">
+                <ShieldCheck className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Due</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.due ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-red-100">
+                <ShieldAlert className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Overdue</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.overdue ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-gray-100">
+                <Calendar className="w-6 h-6 text-gray-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Unscheduled</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.unscheduled ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Clock className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Planned</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.planned ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-green-100">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.completed ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center">
+              <div className="p-3 rounded-full bg-red-100">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Cancelled</p>
+                <p className="text-2xl font-bold text-gray-900">{metrics?.cancelled ?? '...'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row gap-4">
