@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, Bell } from 'lucide-react';
-import { ServiceDueStatus, ServiceVisitStatus, Customer } from '@prisma/client';
+import { ServiceVisitStatus, Customer } from '@prisma/client';
+
+enum ServiceDueStatus {
+  DUE = 'DUE',
+  OVERDUE = 'OVERDUE',
+}
 
 interface ServiceJob {
   id: number;
