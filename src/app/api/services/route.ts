@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Debug: Log raw service data
+    console.log('All services', services);
     if (filter === 'due_in_30_days') {
       console.log('Found services count:', services.length);
       services.forEach(service => {
