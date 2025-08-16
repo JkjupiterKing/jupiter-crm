@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const thirtyDaysFromNow = new Date();
+      const thirtyDaysFromNow = new Date(today);
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       thirtyDaysFromNow.setHours(23, 59, 59, 999);
       
