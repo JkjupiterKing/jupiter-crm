@@ -43,11 +43,20 @@ export async function GET(request: NextRequest) {
 
     if (filter === 'due_in_30_days') {
       const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      
       const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      thirtyDaysFromNow.setHours(23, 59, 59, 999); // End of the 30th day
+      
       whereClause.serviceDueDate = {
         gte: today,
         lte: thirtyDaysFromNow,
+      };
+      
+      // Also exclude completed and cancelled services for this filter
+      whereClause.serviceVisitStatus = {
+        notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED]
       };
     }
 
