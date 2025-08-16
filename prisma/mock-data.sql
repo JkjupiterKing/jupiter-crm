@@ -73,7 +73,7 @@ INSERT INTO SaleItem (id, saleId, productId, quantity, unitPrice, lineTotal, ite
 
 -- Insert Service Jobs
 INSERT INTO "ServiceJob" (id, customerId, engineerId, visitScheduledDate, serviceDueDate, serviceVisitStatus, jobType, warrantyStatus, billedAmount, notes, createdAt, updatedAt) VALUES
-(1, 1, 2, '2025-08-20 09:00:00', '2025-08-20 09:00:00', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'Installation of industrial air compressor', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(1, 1, NULL, NULL, '2025-09-10 09:00:00', 'UNSCHEDULED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'Installation of industrial air compressor', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
 (2, 2, 1, '2025-09-10 10:00:00', '2025-09-10 10:00:00', 'PLANNED', 'INSTALLATION', 'IN_WARRANTY', NULL, 'HVAC system installation and commissioning', '2025-08-01 11:00:00', '2025-08-01 11:00:00'),
 (3, 3, 3, '2025-08-03 11:00:00', '2025-08-03 11:00:00', 'COMPLETED', 'SERVICE', 'IN_WARRANTY', 2000, 'Annual maintenance of water pump system', '2025-07-27 12:00:00', '2025-07-27 12:00:00'),
 (4, 4, 5, '2025-09-04 12:00:00', '2025-12-04 12:00:00', 'PLANNED', 'REPAIR', 'OUT_OF_WARRANTY', NULL, 'Conveyor belt repair and maintenance', '2025-08-01 13:00:00', '2025-08-01 13:00:00'),
