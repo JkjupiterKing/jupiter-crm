@@ -43,11 +43,11 @@ export async function GET(request: NextRequest) {
     // Special handling for the due_in_30_days filter
     if (filter === 'due_in_30_days') {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
+      today.setUTCHours(0, 0, 0, 0);
+
       const thirtyDaysFromNow = new Date(today);
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      thirtyDaysFromNow.setHours(23, 59, 59, 999);
+      thirtyDaysFromNow.setUTCDate(thirtyDaysFromNow.getUTCDate() + 30);
+      thirtyDaysFromNow.setUTCHours(23, 59, 59, 999);
       
       // Debug logging
       console.log('Filter: due_in_30_days');
