@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
 import { ServiceVisitStatus } from '@prisma/client';
 
 enum ServiceDueStatus {
@@ -10,9 +9,9 @@ enum ServiceDueStatus {
 
 const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+  today.setHours(0, 0, 0, 0);
   const dueDate = new Date(serviceDueDate);
-  dueDate.setHours(0, 0, 0, 0); // Normalize dueDate to the start of the day
+  dueDate.setHours(0, 0, 0, 0);
 
   if (dueDate < today) {
     return ServiceDueStatus.OVERDUE;
@@ -41,23 +40,31 @@ export async function GET(request: NextRequest) {
       whereClause.serviceVisitStatus = visitStatus;
     }
 
+    // Special handling for the due_in_30_days filter
     if (filter === 'due_in_30_days') {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
+      today.setHours(0, 0, 0, 0);
       
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      thirtyDaysFromNow.setHours(23, 59, 59, 999); // End of the 30th day
+      thirtyDaysFromNow.setHours(23, 59, 59, 999);
+      
+      // Debug logging
+      console.log('Filter: due_in_30_days');
+      console.log('Today:', today.toISOString());
+      console.log('Thirty days from now:', thirtyDaysFromNow.toISOString());
       
       whereClause.serviceDueDate = {
         gte: today,
         lte: thirtyDaysFromNow,
       };
       
-      // Also exclude completed and cancelled services for this filter
+      // Exclude completed and cancelled services
       whereClause.serviceVisitStatus = {
-        notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED]
+        notIn: ['COMPLETED', 'CANCELLED']
       };
+      
+      console.log('Where clause:', JSON.stringify(whereClause, null, 2));
     }
 
     const services = await prisma.serviceJob.findMany({
@@ -78,13 +85,28 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        visitScheduledDate: 'asc',
+        serviceDueDate: 'asc',
       },
     });
 
+    // Debug: Log raw service data
+    if (filter === 'due_in_30_days') {
+      console.log('Found services count:', services.length);
+      services.forEach(service => {
+        console.log(`Service ${service.id}: Due ${service.serviceDueDate}, Status: ${service.serviceVisitStatus}`);
+      });
+      
+      // Also run a count query to compare
+      const count = await prisma.serviceJob.count({
+        where: whereClause
+      });
+      console.log('Count query result:', count);
+    }
+
     const servicesWithStatus = services.map(service => {
       let serviceDueStatus: ServiceDueStatus | null = null;
-      if (service.serviceVisitStatus !== ServiceVisitStatus.COMPLETED && service.serviceVisitStatus !== ServiceVisitStatus.CANCELLED) {
+      if (service.serviceVisitStatus !== ServiceVisitStatus.COMPLETED && 
+          service.serviceVisitStatus !== ServiceVisitStatus.CANCELLED) {
         serviceDueStatus = getServiceDueStatus(service.serviceDueDate);
       }
       return { ...service, serviceDueStatus };
@@ -101,7 +123,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch services' },
+      { error: 'Failed to fetch services', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -151,7 +173,6 @@ export async function POST(request: NextRequest) {
 
     const visitScheduledDate = body.visitScheduledDate ? new Date(body.visitScheduledDate) : null;
 
-    // Determine statuses
     let serviceVisitStatus = body.serviceVisitStatus;
     if (!serviceVisitStatus || !Object.values(ServiceVisitStatus).includes(serviceVisitStatus)) {
       serviceVisitStatus = visitScheduledDate ? ServiceVisitStatus.PLANNED : ServiceVisitStatus.UNSCHEDULED;
@@ -171,8 +192,9 @@ export async function POST(request: NextRequest) {
         problemDescription: body.problemDescription,
         resolutionNotes: body.resolutionNotes,
         billedAmount: body.billedAmount ? parseInt(body.billedAmount) : null,
+        notes: body.notes,
         items: {
-        create: body.items?.map((item: { productId: any; sparePartId: any; quantity: any; unitPrice: any; coveredByWarranty: any; }) => ({
+          create: body.items?.map((item: any) => ({
             productId: item.productId,
             sparePartId: item.sparePartId,
             quantity: item.quantity,
