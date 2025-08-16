@@ -3,10 +3,28 @@ import { prisma } from '@/lib/db';
 
 import { ServiceVisitStatus } from '@prisma/client';
 
+enum ServiceDueStatus {
+  DUE = 'DUE',
+  OVERDUE = 'OVERDUE',
+}
+
+const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+  const dueDate = new Date(serviceDueDate);
+  dueDate.setHours(0, 0, 0, 0); // Normalize dueDate to the start of the day
+
+  if (dueDate < today) {
+    return ServiceDueStatus.OVERDUE;
+  }
+  return ServiceDueStatus.DUE;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
+    const dueStatus = searchParams.get('due_status');
     const visitStatus = searchParams.get('visit_status');
     const filter = searchParams.get('filter');
 
@@ -21,6 +39,16 @@ export async function GET(request: NextRequest) {
 
     if (visitStatus && Object.values(ServiceVisitStatus).includes(visitStatus as ServiceVisitStatus)) {
       whereClause.serviceVisitStatus = visitStatus;
+    }
+
+    if (filter === 'due_in_30_days') {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      whereClause.serviceDueDate = {
+        gte: today,
+        lte: thirtyDaysFromNow,
+      };
     }
 
     const services = await prisma.serviceJob.findMany({
@@ -45,16 +73,19 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    let filteredServices = services;
+    const servicesWithStatus = services.map(service => {
+      let serviceDueStatus: ServiceDueStatus | null = null;
+      if (service.serviceVisitStatus !== ServiceVisitStatus.COMPLETED && service.serviceVisitStatus !== ServiceVisitStatus.CANCELLED) {
+        serviceDueStatus = getServiceDueStatus(service.serviceDueDate);
+      }
+      return { ...service, serviceDueStatus };
+    });
 
-    if (filter === 'due_in_30_days') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      filteredServices = services.filter((service) => {
-        const dueDate = new Date(service.serviceDueDate);
-        return dueDate >= today && dueDate <= thirtyDaysFromNow;
-      });
+    let filteredServices = servicesWithStatus;
+    if (dueStatus) {
+      filteredServices = servicesWithStatus.filter(
+        service => service.serviceDueStatus === dueStatus
+      );
     }
 
     return NextResponse.json(filteredServices);
