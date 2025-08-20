@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
+import { dateOnly } from '@/lib/date-utils';
+import { addDays, addMonths, addYears } from 'date-fns';
 
 enum ServiceDueStatus {
   DUE = 'DUE',
@@ -8,10 +10,8 @@ enum ServiceDueStatus {
 }
 
 const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(serviceDueDate);
-  dueDate.setHours(0, 0, 0, 0);
+  const today = dateOnly(new Date());
+  const dueDate = dateOnly(serviceDueDate);
 
   if (dueDate < today) {
     return ServiceDueStatus.OVERDUE;
@@ -42,18 +42,9 @@ export async function GET(request: NextRequest) {
 
     // Special handling for the due_in_30_days filter
     if (filter === 'due_in_30_days') {
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      const today = dateOnly(new Date());
+      const thirtyDaysFromNow = addDays(today, 30);
 
-      const thirtyDaysFromNow = new Date(today);
-      thirtyDaysFromNow.setUTCDate(thirtyDaysFromNow.getUTCDate() + 30);
-      thirtyDaysFromNow.setUTCHours(23, 59, 59, 999);
-      
-      // Debug logging
-      console.log('Filter: due_in_30_days');
-      console.log('Today:', today.toISOString());
-      console.log('Thirty days from now:', thirtyDaysFromNow.toISOString());
-      
       whereClause.serviceDueDate = {
         gte: today,
         lte: thirtyDaysFromNow,
@@ -63,8 +54,6 @@ export async function GET(request: NextRequest) {
       whereClause.serviceVisitStatus = {
         notIn: ['COMPLETED', 'CANCELLED']
       };
-      
-      console.log('Where clause:', JSON.stringify(whereClause, null, 2));
     }
 
     const services = await prisma.serviceJob.findMany({
@@ -88,20 +77,6 @@ export async function GET(request: NextRequest) {
         serviceDueDate: 'asc',
       },
     });
-
-    console.log('All services', services);
-    if (filter === 'due_in_30_days') {
-      console.log('Found services count:', services.length);
-      services.forEach(service => {
-        console.log(`Service ${service.id}: Due ${service.serviceDueDate}, Status: ${service.serviceVisitStatus}`);
-      });
-      
-      // Also run a count query to compare
-      const count = await prisma.serviceJob.count({
-        where: whereClause
-      });
-      console.log('Count query result:', count);
-    }
 
     const servicesWithStatus = services.map(service => {
       let serviceDueStatus: ServiceDueStatus | null = null;
@@ -151,13 +126,13 @@ export async function POST(request: NextRequest) {
         const productItem = sale.items.find(item => item.product?.service_frequency && item.product.service_frequency !== 'NONE');
         if (productItem && productItem.product) {
           const frequency = productItem.product.service_frequency;
-          const saleDate = new Date(sale.saleDate);
+          const saleDate = dateOnly(sale.saleDate);
           if (frequency === 'QUARTERLY') {
-            serviceDueDate = new Date(saleDate.setMonth(saleDate.getMonth() + 3));
+            serviceDueDate = addMonths(saleDate, 3);
           } else if (frequency === 'HALF_YEARLY') {
-            serviceDueDate = new Date(saleDate.setMonth(saleDate.getMonth() + 6));
+            serviceDueDate = addMonths(saleDate, 6);
           } else if (frequency === 'YEARLY') {
-            serviceDueDate = new Date(saleDate.setFullYear(saleDate.getFullYear() + 1));
+            serviceDueDate = addYears(saleDate, 1);
           }
         }
       }
@@ -165,13 +140,13 @@ export async function POST(request: NextRequest) {
     
     if (!serviceDueDate) {
       if (body.serviceDueDate) {
-        serviceDueDate = new Date(body.serviceDueDate);
+        serviceDueDate = dateOnly(body.serviceDueDate);
       } else {
         return NextResponse.json({ error: 'Service Due Date is required' }, { status: 400 });
       }
     }
 
-    const visitScheduledDate = body.visitScheduledDate ? new Date(body.visitScheduledDate) : null;
+    const visitScheduledDate = body.visitScheduledDate ? dateOnly(body.visitScheduledDate) : null;
 
     let serviceVisitStatus = body.serviceVisitStatus;
     if (!serviceVisitStatus || !Object.values(ServiceVisitStatus).includes(serviceVisitStatus)) {

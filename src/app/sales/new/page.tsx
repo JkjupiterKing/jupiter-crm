@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import { toYYYYMMDD } from '@/lib/date-utils';
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function NewSalePage() {
   const [formData, setFormData] = useState<any>({
     customerId: '',
     invoiceNumber: '',
-    date: '',
+    saleDate: toYYYYMMDD(new Date()),
     total: '',
     paymentMode: '',
     notes: '',
@@ -83,8 +84,8 @@ export default function NewSalePage() {
       const payload = {
         ...formData,
         customerId: Number(formData.customerId),
-        date: formData.date || new Date().toISOString(),
-        total: Number(formData.total || 0),
+        saleDate: formData.saleDate || toYYYYMMDD(new Date()),
+        totalAmount: Number(formData.totalAmount || 0),
         items: Array.isArray(formData.items) ? formData.items : [],
       };
       const res = await fetch('/api/sales', {
@@ -139,7 +140,7 @@ export default function NewSalePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-              <input type="date" name="date" value={formData.date} onChange={handleChange} className="input-field" />
+              <input type="date" name="saleDate" value={formData.saleDate} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
@@ -147,7 +148,7 @@ export default function NewSalePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
-              <input type="number" name="total" value={formData.total} onChange={handleChange} className="input-field" />
+              <input type="number" name="totalAmount" value={formData.totalAmount} onChange={handleChange} className="input-field" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>

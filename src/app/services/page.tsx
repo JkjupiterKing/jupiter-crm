@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, Plus, Eye, Calendar, Wrench, Clock, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, Bell } from 'lucide-react';
 import { ServiceVisitStatus, Customer } from '@prisma/client';
+import { toYYYYMMDD } from '@/lib/date-utils';
 
 enum ServiceDueStatus {
   DUE = 'DUE',
@@ -382,7 +383,7 @@ export default function ServicesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {service.visitScheduledDate ? new Date(service.visitScheduledDate).toLocaleDateString() : 'Not Scheduled'}
+                            {service.visitScheduledDate ? toYYYYMMDD(new Date(service.visitScheduledDate)) : 'Not Scheduled'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -392,7 +393,7 @@ export default function ServicesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(service.serviceDueDate).toLocaleDateString()}
+                            {toYYYYMMDD(new Date(service.serviceDueDate))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

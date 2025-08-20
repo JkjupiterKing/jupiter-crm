@@ -1,32 +1,36 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
+import { dateOnly } from '@/lib/date-utils';
+import { addDays } from 'date-fns';
 
 export async function GET() {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const today = dateOnly(new Date());
+    const thirtyDaysFromNow = addDays(today, 30);
 
-    const services = await prisma.serviceJob.findMany({
+    const servicesOverdue = await prisma.serviceJob.count({
       where: {
+        serviceDueDate: {
+          lt: today,
+        },
         serviceVisitStatus: {
           notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED],
         },
       },
-      select: {
-        serviceDueDate: true,
-      },
     });
 
-    const servicesOverdue = services.filter(
-      (service) => new Date(service.serviceDueDate) < today
-    ).length;
-
-    const servicesDueInNext30Days = services.filter((service) => {
-      const dueDate = new Date(service.serviceDueDate);
-      return dueDate >= today && dueDate <= thirtyDaysFromNow;
-    }).length;
+    const servicesDueInNext30Days = await prisma.serviceJob.count({
+      where: {
+        serviceDueDate: {
+          gte: today,
+          lte: thirtyDaysFromNow,
+        },
+        serviceVisitStatus: {
+          notIn: [ServiceVisitStatus.COMPLETED, ServiceVisitStatus.CANCELLED],
+        },
+      },
+    });
 
     const servicesPlanned = await prisma.serviceJob.count({
       where: {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { dateOnly } from '@/lib/date-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
         notes: body.notes || body.note,
         unitPrice: body.unitPrice,
         totalAmount: body.totalAmount,
-        transactionDate: body.transactionDate ? new Date(body.transactionDate) : new Date(),
+        transactionDate: dateOnly(body.transactionDate || new Date()),
       },
     });
 

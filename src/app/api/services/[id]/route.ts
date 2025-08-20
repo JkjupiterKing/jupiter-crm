@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
+import { dateOnly } from '@/lib/date-utils';
 
 interface ServiceItemData {
   productId?: number;
@@ -57,10 +58,10 @@ export async function PATCH(
 
     // Handle date and status updates
     if (body.visitScheduledDate) {
-      dataToUpdate.visitScheduledDate = new Date(body.visitScheduledDate);
+      dataToUpdate.visitScheduledDate = dateOnly(body.visitScheduledDate);
     }
     if (body.serviceDueDate) {
-      dataToUpdate.serviceDueDate = new Date(body.serviceDueDate);
+      dataToUpdate.serviceDueDate = dateOnly(body.serviceDueDate);
     }
 
     // Handle visit status - manual override takes precedence

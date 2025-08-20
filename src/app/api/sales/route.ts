@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { add } from 'date-fns';
+import { dateOnly } from '@/lib/date-utils';
 
 function getServiceDates(frequency: string, saleDate: Date): Date[] {
   const dates: Date[] = [];
   const normalizedFrequency = frequency.toUpperCase();
+  const startDate = dateOnly(saleDate);
 
   if (normalizedFrequency === 'QUARTERLY') {
     for (let i = 1; i <= 4; i++) {
-      dates.push(add(saleDate, { months: i * 3 }));
+      dates.push(add(startDate, { months: i * 3 }));
     }
   } else if (normalizedFrequency === 'HALF_YEARLY') {
     for (let i = 1; i <= 2; i++) {
-      dates.push(add(saleDate, { months: i * 6 }));
+      dates.push(add(startDate, { months: i * 6 }));
     }
   } else if (normalizedFrequency === 'YEARLY') {
-    dates.push(add(saleDate, { years: 1 }));
+    dates.push(add(startDate, { years: 1 }));
   }
 
   return dates;
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
       data: {
         customerId: body.customerId,
         invoiceNumber: body.invoiceNumber,
-        saleDate: new Date(body.saleDate),
+        saleDate: dateOnly(body.saleDate),
         totalAmount: body.totalAmount,
         paymentMode: body.paymentMode,
         status: body.status || 'PAID',

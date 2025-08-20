@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import Link from 'next/link';
 import { ArrowLeft, Edit, User, Building, MapPin, Phone, Mail, Star, CheckCircle, XCircle } from 'lucide-react';
+import { toYYYYMMDD } from '@/lib/date-utils';
 
 export default async function CustomerDetailPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -181,11 +182,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
             <div className="card">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Since</h3>
               <p className="text-gray-900">
-                {new Date(customer.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+                {toYYYYMMDD(new Date(customer.createdAt))}
               </p>
             </div>
           </div>
