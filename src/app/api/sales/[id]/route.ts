@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { dateOnly } from '@/lib/date-utils';
 
 export async function GET(
   _request: NextRequest,
@@ -35,7 +36,7 @@ export async function PATCH(
       data: {
         customerId: body.customerId,
         invoiceNumber: body.invoiceNumber,
-        saleDate: body.saleDate ? new Date(body.saleDate) : undefined,
+        saleDate: body.saleDate ? dateOnly(body.saleDate) : undefined,
         totalAmount: body.totalAmount,
         paymentMode: body.paymentMode,
         notes: body.notes,

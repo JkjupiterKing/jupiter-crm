@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { dateOnly } from '@/lib/date-utils';
+import { addDays } from 'date-fns';
 
 export async function GET() {
   try {
@@ -53,9 +55,8 @@ export async function GET() {
     });
 
     // Get today's services
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const startOfDay = dateOnly(new Date());
+    const endOfDay = addDays(startOfDay, 1);
 
     const todaysServices = await prisma.serviceJob.findMany({
       where: {

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import { toYYYYMMDD } from '@/lib/date-utils';
 
 export default function EditServicePage() {
   const params = useParams<{ id: string }>();
@@ -27,8 +28,8 @@ export default function EditServicePage() {
         setFormData({
           customerId: data.customerId,
           customerProductId: data.customerProductId ?? '',
-          visitScheduledDate: data.visitScheduledDate ? new Date(data.visitScheduledDate).toISOString().slice(0, 16) : '',
-          serviceDueDate: data.serviceDueDate ? new Date(data.serviceDueDate).toISOString().slice(0, 16) : '',
+          visitScheduledDate: data.visitScheduledDate ? toYYYYMMDD(new Date(data.visitScheduledDate)) : '',
+          serviceDueDate: data.serviceDueDate ? toYYYYMMDD(new Date(data.serviceDueDate)) : '',
           serviceVisitStatus: data.serviceVisitStatus,
           jobType: data.jobType,
           warrantyStatus: data.warrantyStatus,
@@ -59,8 +60,8 @@ export default function EditServicePage() {
         ...formData,
         customerId: Number(formData.customerId),
         customerProductId: formData.customerProductId ? Number(formData.customerProductId) : null,
-        visitScheduledDate: formData.visitScheduledDate ? new Date(formData.visitScheduledDate).toISOString() : null,
-        serviceDueDate: formData.serviceDueDate ? new Date(formData.serviceDueDate).toISOString() : undefined,
+        visitScheduledDate: formData.visitScheduledDate || null,
+        serviceDueDate: formData.serviceDueDate || undefined,
         engineerId: formData.engineerId ? Number(formData.engineerId) : null,
         billedAmount: formData.billedAmount ? Number(formData.billedAmount) : null,
       };
@@ -113,11 +114,11 @@ export default function EditServicePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Visit Scheduled Date</label>
-              <input type="datetime-local" name="visitScheduledDate" value={formData.visitScheduledDate} onChange={handleChange} className="input-field" />
+              <input type="date" name="visitScheduledDate" value={formData.visitScheduledDate} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Service Due Date *</label>
-              <input type="datetime-local" name="serviceDueDate" value={formData.serviceDueDate} onChange={handleChange} required className="input-field" />
+              <input type="date" name="serviceDueDate" value={formData.serviceDueDate} onChange={handleChange} required className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Visit Status</label>

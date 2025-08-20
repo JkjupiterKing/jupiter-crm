@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
+import { dateOnly } from '@/lib/date-utils';
 
 enum ServiceDueStatus {
   DUE = 'DUE',
@@ -8,10 +9,8 @@ enum ServiceDueStatus {
 }
 
 const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(serviceDueDate);
-  dueDate.setHours(0, 0, 0, 0);
+  const today = dateOnly(new Date());
+  const dueDate = dateOnly(serviceDueDate);
 
   if (dueDate < today) {
     return ServiceDueStatus.OVERDUE;

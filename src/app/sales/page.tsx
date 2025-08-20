@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, Plus, Eye, Receipt, DollarSign, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react';
+import { toYYYYMMDD } from '@/lib/date-utils';
 
 interface Sale {
   id: number;
@@ -307,7 +308,7 @@ export default function SalesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(sale.saleDate).toLocaleDateString()}
+                            {toYYYYMMDD(new Date(sale.saleDate))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
