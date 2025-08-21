@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ServiceVisitStatus } from '@prisma/client';
-import { dateOnly } from '@/lib/date-utils';
+import { dateOnly, getMockableDate } from '@/lib/date-utils';
 import { addDays, addMonths, addYears } from 'date-fns';
 
 enum ServiceDueStatus {
@@ -10,7 +10,7 @@ enum ServiceDueStatus {
 }
 
 const getServiceDueStatus = (serviceDueDate: Date): ServiceDueStatus | null => {
-  const today = dateOnly(new Date());
+  const today = dateOnly(getMockableDate());
   const dueDate = dateOnly(serviceDueDate);
 
   if (dueDate < today) {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Special handling for the due_in_30_days filter
     if (filter === 'due_in_30_days') {
-      const today = dateOnly(new Date());
+      const today = dateOnly(getMockableDate());
       const thirtyDaysFromNow = addDays(today, 30);
 
       whereClause.serviceDueDate = {
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    console.log("Final whereClause for services query:", JSON.stringify(whereClause, null, 2));
     const services = await prisma.serviceJob.findMany({
       where: whereClause,
       include: {
