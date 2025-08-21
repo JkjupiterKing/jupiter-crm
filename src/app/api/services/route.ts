@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
       whereClause.serviceDueDate = {
         gte: today,
-        lte: thirtyDaysFromNow,
+        lt: thirtyDaysFromNow,
       };
       
       // Exclude completed and cancelled services
