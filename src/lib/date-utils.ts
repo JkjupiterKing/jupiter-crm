@@ -1,4 +1,19 @@
 import { format, parseISO, startOfDay, isEqual, isWithinInterval } from 'date-fns';
+import { isMockDatabase } from './config';
+
+/**
+ * Returns the current date. In mock mode, this will be a fixed date
+ * to ensure consistency with the mock data.
+ * @returns A Date object representing the current date.
+ */
+export function getMockableDate(): Date {
+  if (isMockDatabase()) {
+    // This is the date around which the mock data is centered.
+    // The mock data has a service due on 2025-08-20, so we use this date.
+    return new Date('2025-08-20T12:00:00.000Z');
+  }
+  return new Date();
+}
 
 /**
  * Returns a Date object with the time set to midnight in UTC.
