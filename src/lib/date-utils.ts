@@ -2,12 +2,15 @@ import { format, parseISO, startOfDay, isEqual, isWithinInterval } from 'date-fn
 
 /**
  * Returns a Date object with the time set to midnight in UTC.
+ * This function is timezone-aware and ensures that "start of day" is always calculated in UTC.
  * @param date - The date to be truncated.
  * @returns A new Date object set to midnight UTC.
  */
 export function dateOnly(date: Date | string): Date {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return startOfDay(dateObj);
+  // To correctly get the start of the day in UTC, we can't just use startOfDay from date-fns,
+  // as it is based on the local timezone. We need to work with the date components in UTC.
+  return new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate()));
 }
 
 /**
